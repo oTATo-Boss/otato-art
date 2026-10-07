@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- oTATo prompt 的 Sparkle 更新清单。正式版发布前保持为空：没有条目 = 没有可用更新。 -->
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>oTATo prompt</title>
+    <link>https://otato.art/updates/appcast.xml</link>
+    <description>oTATo prompt updates</description>
+    <language>zh-cn</language>
+  </channel>
+</rss>

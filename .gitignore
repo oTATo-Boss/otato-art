@@ -1,0 +1,21 @@
+/node_modules
+/.next/
+/out/
+/build
+.DS_Store
+*.pem
+npm-debug.log*
+.env*
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+.wrangler
+.open-next
+
+# Local artwork projects and generated previews
+/Claude outputs/
+*.blend
+*.blend[0-9]
+*.bak_*.py
+__pycache__/
+/3d/workbench/renders/

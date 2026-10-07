@@ -1,0 +1,88 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="file:///home/claude/otato-site/node_modules/@fontsource/noto-sans-sc/900.css">
+<link rel="stylesheet" href="file:///home/claude/otato-site/node_modules/@fontsource/noto-sans-sc/500.css">
+<style>
+@font-face{font-family:G;src:url(file:///home/claude/otato-site/node_modules/geist/dist/fonts/geist-sans/Geist-Black.ttf);font-weight:900}
+@font-face{font-family:G;src:url(file:///home/claude/otato-site/node_modules/geist/dist/fonts/geist-sans/Geist-Bold.ttf);font-weight:700}
+@font-face{font-family:G;src:url(file:///home/claude/otato-site/node_modules/geist/dist/fonts/geist-sans/Geist-Medium.ttf);font-weight:500}
+@font-face{font-family:M;src:url(file:///home/claude/otato-site/node_modules/geist/dist/fonts/geist-mono/GeistMono-Medium.ttf)}
+@font-face{font-family:H;src:url(file:///home/claude/otato-site/node_modules/@fontsource/architects-daughter/files/architects-daughter-latin-400-normal.woff2)}
+body{margin:0;background:transparent;font-family:G,'Noto Sans SC';}
+.t{position:relative;overflow:hidden;margin:0 0 20px}
+.logo{display:block}
+.spark{display:inline-block;width:1em;height:1em;background:currentColor;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%)}
+</style></head><body>
+
+<!-- prompt 亚克力吊牌上的白色印刷（透明底） -->
+<div id="prompt" class="t" style="width:600px;height:1000px;color:#fff">
+  <div style="position:absolute;left:300px;top:540px;transform:translate(-50%,-50%) rotate(90deg);font-weight:900;font-size:236px;letter-spacing:-10px;white-space:nowrap">prompt</div>
+  <div style="position:absolute;left:118px;top:540px;transform:translate(-50%,-50%) rotate(90deg);font-family:M;font-size:30px;letter-spacing:2px;white-space:nowrap;opacity:.85">YOUR PROMPTS, AT HAND</div>
+  <span class="spark" style="position:absolute;right:120px;bottom:120px;font-size:70px"></span>
+</div>
+
+<!-- model 拍立得 -->
+<div id="polaroid" class="t" style="width:660px;height:1020px;background:#FBFAF6">
+  <div style="position:absolute;left:44px;top:56px;width:572px;height:730px;background:url(photo.jpg) center/cover"></div>
+  <div style="position:absolute;left:52px;bottom:78px;font-weight:900;font-size:120px;letter-spacing:-5px;color:#E11D48;line-height:1">model</div>
+  <div style="position:absolute;right:56px;bottom:96px;font-family:H;font-size:34px;color:#555;transform:rotate(-4deg);text-align:right;line-height:1.1">more than<br>a model.</div>
+</div>
+
+<!-- work 帆布三角旗 -->
+<div id="pennant" class="t" style="width:800px;height:1000px;background:#F1ECE0">
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.025) 0 2px,transparent 2px 5px),repeating-linear-gradient(90deg,rgba(0,0,0,.025) 0 2px,transparent 2px 5px)"></div>
+  <div style="position:absolute;left:0;right:0;top:120px;text-align:center;font-weight:900;font-size:210px;letter-spacing:-9px;color:#2747C9;line-height:1">work</div>
+  <img src="file:///home/claude/otato-3d/logo-blue.png" style="position:absolute;left:310px;top:340px;width:170px">
+  <div style="position:absolute;left:0;right:0;top:540px;text-align:center;font-family:M;font-size:24px;letter-spacing:3px;color:#2747C9">SHOW YOUR BEST</div>
+</div>
+
+<!-- 贴纸包（透明底，袋子本身是透明塑料） -->
+<div id="stickers" class="t" style="width:800px;height:1040px">
+  <div style="position:absolute;left:0;right:0;top:0;height:250px;background:#121212;color:#fff;padding:60px 56px;box-sizing:border-box">
+    <div style="font-weight:900;font-size:78px;letter-spacing:-2px;line-height:1">oTATo</div>
+    <div style="font-weight:700;font-size:44px;margin-top:8px">STICKER PACK</div>
+    <span class="spark" style="position:absolute;right:60px;top:70px;font-size:90px"></span>
+  </div>
+  <div style="position:absolute;left:60px;top:320px;width:300px;height:300px;border-radius:50%;background:#fff;box-shadow:0 0 0 14px #fff;display:grid;place-items:center"><img src="file:///home/claude/otato-3d/logo.png" style="width:290px"></div>
+  <div style="position:absolute;left:420px;top:330px;width:320px;height:250px;border-radius:120px;background:#FF6B57;color:#fff;font-weight:900;font-size:56px;line-height:1;display:grid;place-items:center;text-align:center;transform:rotate(-8deg);box-shadow:0 0 0 12px #fff">CREATORS<br>ONLY</div>
+  <div style="position:absolute;left:70px;top:690px;width:420px;height:260px;border-radius:130px;background:#7BD88F;color:#0E3B1B;font-family:H;font-size:64px;line-height:1;display:grid;place-items:center;text-align:center;transform:rotate(-5deg);box-shadow:0 0 0 12px #fff">Good Ideas<br>Everywhere</div>
+  <span class="spark" style="position:absolute;left:560px;top:660px;font-size:180px;color:#2B5FFC;filter:drop-shadow(0 0 0 #fff)"></span>
+  <div style="position:absolute;left:540px;top:860px;width:170px;height:170px;border-radius:50%;background:#FFC93C;display:grid;place-items:center;font-weight:900;font-size:40px;box-shadow:0 0 0 10px #fff">T^T</div>
+</div>
+
+<!-- 墙上亚克力牌（深色字，透明底） -->
+<div id="sign" class="t" style="width:780px;height:960px;color:#161616">
+  <div style="position:absolute;left:80px;top:110px;font-weight:700;font-size:96px;line-height:1.02;letter-spacing:-3px">Tools<br>for Brighter<br>Creators.</div>
+  <div style="position:absolute;left:84px;top:500px;width:60px;height:8px;background:#E11D48"></div>
+  <div style="position:absolute;left:84px;top:560px;font-family:'Noto Sans SC';font-weight:500;font-size:50px;line-height:1.5">更好的创作，<br>从这里开始。</div>
+</div>
+
+<!-- 便签 -->
+<div id="note" class="t" style="width:640px;height:640px;background:#FFE36A">
+  <div style="position:absolute;left:60px;top:90px;font-family:H;font-size:92px;line-height:1.08;color:#222;transform:rotate(-3deg)">Good<br>Ideas<br>Peel On :)</div>
+</div>
+
+<!-- 空位：虚线框 -->
+<div id="ghost" class="t" style="width:560px;height:880px">
+  <div style="position:absolute;inset:14px;border:7px dashed rgba(60,60,64,.8);border-radius:36px"></div>
+  <div style="position:absolute;left:0;right:0;top:300px;text-align:center;font-weight:500;font-size:140px;color:rgba(60,60,64,.85);line-height:1">+</div>
+  <div style="position:absolute;left:0;right:0;top:470px;text-align:center;font-family:M;font-size:40px;letter-spacing:2px;color:rgba(60,60,64,.85)">COMING SOON</div>
+</div>
+
+<!-- 切割垫 -->
+<div id="mat" class="t" style="width:1800px;height:900px;background:#2E55E6">
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.18) 0 2px,transparent 2px 60px),repeating-linear-gradient(90deg,rgba(255,255,255,.18) 0 2px,transparent 2px 60px)"></div>
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,transparent 1px 12px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 12px)"></div>
+  <div style="position:absolute;right:90px;bottom:70px;font-family:H;font-size:84px;color:rgba(255,255,255,.85);transform:rotate(-6deg)">Small Tools, Big Ideas ✦</div>
+</div>
+
+<!-- 书封面 -->
+<div id="book" class="t" style="width:1020px;height:720px;background:#F6F4EF">
+  <div style="position:absolute;left:80px;top:90px;font-weight:900;font-size:120px;letter-spacing:-4px">oTATo</div>
+  <div style="position:absolute;left:84px;bottom:90px;font-weight:500;font-size:44px;line-height:1.3;color:#333">Creative Tools<br>for Brighter Creators.</div>
+</div>
+
+<!-- 黄色收纳盒上的字 -->
+<div id="bin" class="t" style="width:800px;height:200px;color:#1A1A1A">
+  <div style="position:absolute;left:0;right:0;top:40px;text-align:center;font-weight:900;font-size:110px;letter-spacing:-3px">oTATo</div>
+</div>
+</body></html>

@@ -1,0 +1,6 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "otato-art",
+  "account_id": "5de6d827a228377db32730376e2e9b28",
+  "pages_build_output_dir": "./out"
+}
