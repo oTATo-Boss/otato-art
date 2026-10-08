@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { preload } from "react-dom";
 import layout from "./workbench-layout.json";
 import { HangingCharms } from "./HangingCharms";
@@ -84,11 +84,13 @@ export function Workbench({
   visible,
   labels,
   onPick,
+  onReady,
 }: {
   active: boolean;
   visible: boolean;
   labels: Record<string, string>;
   onPick: (id: string) => void;
+  onReady: () => void;
 }) {
   // 在 HTML 头里就开始下载背景和 3D 模型，不等 JS 跑起来
   preload(PLATE, { as: "image", fetchPriority: "high" });
@@ -98,10 +100,53 @@ export function Workbench({
   const shadows = useRef<Record<string, HTMLImageElement | null>>({});
   const tip = useRef<HTMLSpanElement>(null);
   const [tipText, setTipText] = useState("");
+  const [sceneEnabled, setSceneEnabled] = useState(false);
+  const [imagesReady, setImagesReady] = useState(false);
+  const [sceneReady, setSceneReady] = useState(false);
+  const prepared = useRef(false);
+  const markSceneReady = useCallback(() => setSceneReady(true), []);
+  const fallbackToPhoto = useCallback(() => {
+    setSceneEnabled(false);
+    setSceneReady(true);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let secondFrame = 0;
+    // 让加载界面先绘制，再创建 WebGL 和环境贴图。
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => setSceneEnabled(true));
+    });
+    const images = Array.from(frame.current?.querySelectorAll("img") ?? []);
+    const titleFont = document.fonts.load('900 48px "Noto Sans SC"', "去皮土豆");
+    Promise.allSettled([...images.map((img) => img.decode()), titleFont]).then(() => {
+      if (!cancelled) setImagesReady(true);
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+    };
+  }, []);
+
+  useEffect(() => {
+    prepared.current = imagesReady && sceneReady;
+    if (prepared.current) onReady();
+  }, [imagesReady, sceneReady, onReady]);
+
+  useEffect(() => {
+    // 网络、WebGL 或编译异常时仍能进入网站，停止迟到的模型初始化。
+    const timeout = window.setTimeout(() => {
+      if (prepared.current) return;
+      setImagesReady(true);
+      fallbackToPhoto();
+    }, 12000);
+    return () => window.clearTimeout(timeout);
+  }, [fallbackToPhoto]);
 
   // 整个画面跟着鼠标轻轻错位
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || !active) return;
     const m = { x: 0, y: 0, tx: 0, ty: 0 };
     let raf = 0;
     const tick = () => {
@@ -124,7 +169,7 @@ export function Workbench({
       cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onMove);
     };
-  }, [visible]);
+  }, [visible, active]);
 
   const onHover = (id: string | null, x: number, y: number) => {
     const t = tip.current;
@@ -145,8 +190,8 @@ export function Workbench({
         {/* 先显示照片，3D 起来以后盖在上面 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={PLATE} alt="" className="absolute inset-0 h-full w-full select-none" draggable={false} />
-        <HangingCharms active={active} visible={visible} onPick={onPick} onHover={onHover} />
-        <LeafShadow visible={visible} />
+        {sceneEnabled && <HangingCharms active={active} visible={visible} onPick={onPick} onHover={onHover} onReady={markSceneReady} onError={fallbackToPhoto} />}
+        <LeafShadow visible={visible && active} />
         {/* 影子全部在玩具下面一层，免得盖住旁边的玩具 */}
         {Object.entries(SPRITES).map(([id, s]) =>
           s.shadow ? <ToyShadow key={id} id={id} b={s.shadow} el={(n) => void (shadows.current[id] = n)} /> : null,

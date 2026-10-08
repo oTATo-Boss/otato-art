@@ -125,31 +125,42 @@ export function HangingCharms({
   visible,
   onPick,
   onHover,
+  onReady,
+  onError,
 }: {
   active: boolean;
   visible: boolean;
   onPick: (id: string) => void;
   onHover: (id: string | null, x: number, y: number) => void;
+  onReady: () => void;
+  onError: () => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const api = useRef<{ drop: () => void } | null>(null);
-  const props = useRef({ visible, onPick, onHover });
+  const props = useRef({ active, visible, onPick, onHover, onReady, onError });
   useEffect(() => {
-    props.current = { visible, onPick, onHover };
-  }, [visible, onPick, onHover]);
+    props.current = { active, visible, onPick, onHover, onReady, onError };
+  }, [active, visible, onPick, onHover, onReady, onError]);
 
   useEffect(() => {
     const el = host.current;
     if (!el) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let disposed = false;
+    let warmed = false;
 
     // 性能：canvas 铺满整个工作台，像素数是最大的开销。
     // 高清屏上渲染分辨率最多 1.5 倍（肉眼几乎看不出差别，像素少一半），并且不再开多重采样抗锯齿；
     // 跑起来如果还掉帧，会自动再往下降（见循环里的 adapt）。
     const DPR_MAX = Math.min(window.devicePixelRatio, 1.5);
     let dpr = DPR_MAX;
-    const renderer = new THREE.WebGLRenderer({ antialias: window.devicePixelRatio < 1.5, alpha: true, powerPreference: "high-performance" });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: window.devicePixelRatio < 1.5, alpha: true, powerPreference: "high-performance" });
+    } catch {
+      props.current.onError();
+      return;
+    }
     renderer.setPixelRatio(dpr);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     // 背景照片调过色（白点拉满、加饱和），这里用 Neutral：白能到纯白、颜色不发灰，和照片对得上
@@ -157,7 +168,7 @@ export function HangingCharms({
     renderer.toneMappingExposure = 0.95;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
-    renderer.domElement.style.cssText = "position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none";
+    renderer.domElement.style.cssText = "position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;opacity:0";
     el.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -225,7 +236,41 @@ export function HangingCharms({
     // ───── 挂件 ─────
     const bodies = {} as Record<Gid, Body>;
     const pickables: THREE.Object3D[] = [];
-    const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder); // glb 用 meshopt 压过
+    const manager = new THREE.LoadingManager();
+    const loader = new GLTFLoader(manager).setMeshoptDecoder(MeshoptDecoder); // glb 用 meshopt 压过
+    manager.onLoad = async () => {
+      if (disposed) return;
+      try {
+        // 文件下载、模型解码及网格处理全部完成后，预编译最终材质。
+        await renderer.compileAsync(scene, camera);
+        if (disposed) return;
+        crt.draw(0, 0);
+        crtTex.needsUpdate = true;
+        mixer?.update(0);
+        scene.updateMatrixWorld(true);
+        // 实际绘制还会上传贴图/顶点、创建阴影缓冲；在加载遮罩后完成。
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        if (disposed) return;
+        renderer.render(scene, camera);
+        // 预热后停在进场起点，避免遮罩淡出时先看到终态、再突然跳回上方。
+        api.current?.drop();
+        for (const s of SLOTS) {
+          const b = bodies[s.id];
+          b.group.position.copy(b.home);
+          b.group.position.y += b.drop;
+          b.group.rotation.set(0, 0, b.a);
+          b.body.rotation.y = b.tw;
+        }
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        if (disposed) return;
+        renderer.render(scene, camera);
+        warmed = true;
+        renderer.domElement.style.opacity = "1";
+        props.current.onReady();
+      } catch {
+        if (!disposed) props.current.onError();
+      }
+    };
     const matCache = new Map<string, THREE.Material>();
     const tag = (root: THREE.Object3D, id: Pick) =>
       root.traverse((o) => {
@@ -576,7 +621,7 @@ export function HangingCharms({
     };
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
-      if (!props.current.visible) {
+      if (!warmed || !props.current.active || !props.current.visible) {
         last = now;
         judgeAt = now + 2000; // 切回来以后先别急着判断
         return;

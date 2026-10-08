@@ -47,11 +47,16 @@ export function Site({ lang }: { lang: Lang }) {
   const [guide, setGuide] = useState(false);
   // 开机动画播完之前，所有出场动画先不开始
   const [ready, setReady] = useState(false);
+  const [prepared, setPrepared] = useState(false);
+  const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
+  const onPrepared = useCallback(() => setPrepared(true), []);
+  const onBootComplete = useCallback(() => setReady(true), []);
   const wraps = useRef<(HTMLElement | null)[]>([]);
-  const nav = useRef({ cur: 0, lockUntil: 0, prevTimer: 0, reduced: false });
+  const nav = useRef({ cur: 0, lockUntil: 0, prevTimer: 0, reduced: false, enabled: false });
 
   const goTo = useCallback((target: number) => {
     const n = nav.current;
+    if (!n.enabled) return;
     const i = Math.max(0, Math.min(slots.length - 1, target));
     if (i === n.cur) return;
     const from = n.cur;
@@ -59,6 +64,7 @@ export function Site({ lang }: { lang: Lang }) {
     n.lockUntil = performance.now() + REVEAL_MS[slots[i].reveal] * 0.85;
     setPrev(from);
     setCurrent(i);
+    setVisited((seen) => new Set(seen).add(i));
     // 重新触发新一屏的出场动画
     const el = wraps.current[i];
     if (el && !n.reduced) {
@@ -73,10 +79,8 @@ export function Site({ lang }: { lang: Lang }) {
 
   /* ───── 初始化：地址里的 #频道、减弱动态效果、语言自动判断 ───── */
   useEffect(() => {
-    const booted = document.documentElement.classList.contains("booted");
-    const id = window.setTimeout(() => setReady(true), booted ? 60 : 1350);
-    return () => window.clearTimeout(id);
-  }, []);
+    nav.current.enabled = ready;
+  }, [ready]);
 
   useEffect(() => {
     const n = nav.current;
@@ -85,7 +89,10 @@ export function Site({ lang }: { lang: Lang }) {
     const i = slots.findIndex((x) => x.id === hash);
     if (i > 0) {
       n.cur = i;
-      requestAnimationFrame(() => setCurrent(i));
+      requestAnimationFrame(() => {
+        setCurrent(i);
+        setVisited((seen) => new Set(seen).add(i));
+      });
     }
     if (lang === "zh") {
       let chosen: string | null = null;
@@ -141,6 +148,7 @@ export function Site({ lang }: { lang: Lang }) {
       if ((Math.abs(dy) > 60 || (fast && Math.abs(dy) > 30)) && performance.now() > n.lockUntil) goTo(n.cur + Math.sign(dy));
     };
     const onKey = (e: KeyboardEvent) => {
+      if (!n.enabled) return;
       const el = e.target as HTMLElement | null;
       if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -179,7 +187,7 @@ export function Site({ lang }: { lang: Lang }) {
 
   return (
     <>
-      <main className="stage" aria-live="polite">
+      <main className="stage" aria-live="polite" inert={!ready}>
         {slots.map((s, i) => {
           const isCur = i === current && ready;
           const isPrev = i === prev;
@@ -198,9 +206,9 @@ export function Site({ lang }: { lang: Lang }) {
                 s.kind === "channel" ? `CH ${s.number} ${channels[s.index!].meta.name}` : s.kind === "open" ? t(ui.brand, lang) : t(ui.about, lang)
               }
             >
-              {s.kind === "open" && <OpenScreen lang={lang} active={isCur} visible={visible} onJump={goToId} />}
-              {s.kind === "about" && <AboutScreen lang={lang} active={isCur} />}
-              {s.kind === "channel" &&
+              {s.kind === "open" && <OpenScreen lang={lang} active={isCur} visible={visible} onJump={goToId} onReady={onPrepared} />}
+              {ready && s.kind === "about" && (visited.has(i) || i === current) && <AboutScreen lang={lang} active={isCur} />}
+              {ready && s.kind === "channel" && (visited.has(i) || i === current) &&
                 (() => {
                   const C = channels[s.index!].Screen;
                   return <C lang={lang} active={isCur} visible={visible} />;
@@ -211,7 +219,7 @@ export function Site({ lang }: { lang: Lang }) {
       </main>
 
       {/* ───── 品牌壳：只留台标、频道号、语言、频道列表 ───── */}
-      <div className="shell">
+      <div className="shell" inert={!ready}>
         <a
           href={homePath[lang]}
           onClick={(e) => {
@@ -280,7 +288,7 @@ export function Site({ lang }: { lang: Lang }) {
         />
       )}
 
-      <Boot />
+      <Boot prepared={prepared} lang={lang} onComplete={onBootComplete} />
     </>
   );
 }

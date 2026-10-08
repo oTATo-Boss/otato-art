@@ -38,11 +38,13 @@ export function OpenScreen({
   active,
   visible,
   onJump,
+  onReady,
 }: {
   lang: Lang;
   active: boolean;
   visible: boolean;
   onJump: (id: string) => void;
+  onReady: () => void;
 }) {
   const labels = useMemo(() => Object.fromEntries(channels.map(({ meta }) => [meta.id, `CH ${meta.number} · ${meta.name}`])), []);
 
@@ -54,7 +56,7 @@ export function OpenScreen({
 
   return (
     <div className="relative h-full w-full overflow-hidden text-[#111]">
-      <Workbench active={active} visible={visible} labels={labels} onPick={onJump} />
+      <Workbench active={active} visible={visible} labels={labels} onPick={onJump} onReady={onReady} />
       {/* 左下压一层淡淡的白，让标题在桌面上也看得清 */}
       <div
         aria-hidden
