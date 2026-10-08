@@ -1,5 +1,6 @@
 """导出网页用的素材：
-- plate.png      背景（不含挂件、香蕉猫；公仔和架上玩具只隐身，影子留着）
+- plate.png      背景（不含挂件、香蕉猫、公仔和架上玩具，也不含它们的影子）
+- shadow_<sprite>.png  每个玩具单独的影子层（阴影捕捉，半分辨率），网页叠在背景上、跳的时候会变淡
 - <sprite>.png   透明小图：toy / robot / bot / duck（同机位，裁到自己的范围）
 - charm_<id>.glb 挂件模型（世界坐标，挂点见 layout）
 - cat.glb        香蕉猫（带原地跑的动画）
@@ -98,7 +99,7 @@ if STEP in (None, "glb"):
     export(rail, OUT + "rail.glb")
 
 # ── 渲染 ──
-saved = {o.name: (o.hide_render, o.visible_camera, o.visible_shadow) for o in bpy.data.objects}
+saved = {o.name: (o.hide_render, o.visible_camera, o.visible_shadow, o.is_shadow_catcher) for o in bpy.data.objects}
 r = sc.render
 r.resolution_x, r.resolution_y, r.resolution_percentage = W, H, 100
 
@@ -106,10 +107,11 @@ r.resolution_x, r.resolution_y, r.resolution_percentage = W, H, 100
 def restore():
     for o in bpy.data.objects:
         if o.name in saved:
-            o.hide_render, o.visible_camera, o.visible_shadow = saved[o.name]
+            o.hide_render, o.visible_camera, o.visible_shadow, o.is_shadow_catcher = saved[o.name]
     r.use_border = False
     r.use_crop_to_border = False
     r.film_transparent = False
+    r.resolution_percentage = 100
 
 
 if STEP in (None, "plate"):
@@ -118,13 +120,34 @@ if STEP in (None, "plate"):
             o.hide_render = True
     for o in cat + rail:
         o.hide_render = True
+    # 玩具整个不进背景（连影子一起），影子单独渲一层，网页里才能跟着动
     for objs in sprites.values():
         for o in objs:
-            o.visible_camera = False
+            o.hide_render = True
     sc.cycles.samples = 192
     r.filepath = OUT + "plate.png"
     bpy.ops.render.render(write_still=True)
     restore()
+
+# 影子层：只留这一个玩具（对相机隐身），其它东西全设成阴影捕捉，渲出来就只有它投下的影子
+if STEP in (None, "shadows"):
+    gone = {o.name for objs in charms.values() for o in objs} | {o.name for o in cat + rail}
+    for key, objs in sprites.items():
+        mine = {o.name for o in objs}
+        others = {o.name for k2, o2s in sprites.items() if k2 != key for o in o2s}
+        for o in bpy.data.objects:
+            if o.name in gone or o.name in others:
+                o.hide_render = True
+            elif o.name in mine:
+                o.visible_camera = False
+            elif o.type in ("MESH", "CURVE", "FONT"):
+                o.is_shadow_catcher = True
+        r.film_transparent = True
+        r.resolution_percentage = 50
+        sc.cycles.samples = 96
+        r.filepath = OUT + "shadow_" + key + ".png"
+        bpy.ops.render.render(write_still=True)
+        restore()
 
 # 小图：只有它自己对相机可见，其它东西照样参与光照和遮挡（影子、反光都对）
 sprite_info = {}

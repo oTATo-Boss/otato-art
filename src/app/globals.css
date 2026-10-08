@@ -447,6 +447,29 @@ body {
 .workbench-toy.hop {
   animation: toy-hop 0.7s cubic-bezier(0.3, 0.7, 0.4, 1);
 }
+.toy-shadow {
+  mix-blend-mode: multiply;
+}
+.toy-shadow.wiggle {
+  animation: shadow-wiggle 0.9s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+.toy-shadow.hop {
+  animation: shadow-hop 0.7s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+/* 玩具离开桌面越高，影子越淡越虚；落地那一下压得最实 */
+@keyframes shadow-hop {
+  0% { opacity: 1; filter: blur(0); }
+  18% { opacity: 1; filter: blur(0); }
+  45% { opacity: 0.4; filter: blur(2px); }
+  70% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; filter: blur(0); }
+}
+@keyframes shadow-wiggle {
+  0% { opacity: 1; }
+  20% { opacity: 0.82; }
+  45% { opacity: 0.9; }
+  100% { opacity: 1; }
+}
 @keyframes toy-wiggle {
   0% { transform: rotate(0); }
   20% { transform: rotate(-7deg); }

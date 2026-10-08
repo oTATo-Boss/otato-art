@@ -2,10 +2,11 @@
 
 开场画面分两层：
 
-1. **背景照片**：Blender（Cycles）渲染的整张工作台，不含挂件、挂杆和香蕉猫。
+1. **背景照片**：Blender（Cycles）渲染的整张工作台，不含挂件、挂杆、香蕉猫和架上玩具。
 2. **活的部分**：
    - 挂件、挂杆、香蕉猫是 three.js 实时 3D（`src/shell/HangingCharms.tsx`）。
    - 公仔和架子上的玩具是同机位渲出来的透明小图（`src/shell/Workbench.tsx`），碰一下会晃。
+   - 每个玩具的影子单独一层（同一个太阳、阴影捕捉渲的），正片叠底叠在背景上，玩具跳起来时影子变淡变虚。
 
 两层用的是**同一台相机**：Blender 导出相机参数到 `workbench-layout.json`，网页照着它摆 three.js 相机，所以能严丝合缝。
 
@@ -77,4 +78,4 @@ otato art dev         # 看效果
 
 - 压缩模型时不能合并或拍平节点（`publish-workbench.mjs` 已经处理），否则网页找不到屏幕、钩子这些部件。
 - 挂件模型是世界坐标导出的，网页用 `layout.json` 里的挂点 `charms` 和钩子下端 `hookLow` 把它们挂回去。
-- 渲染时挂件、挂杆、香蕉猫对背景完全隐藏；玩具只对相机隐藏，影子保留在背景里。
+- 渲染背景时挂件、挂杆、香蕉猫、玩具全部隐藏（连影子）。玩具影子由 `export_web.py` 的 shadows 步骤单独渲（半分辨率），`publish` 去噪、裁剪成 `sprites/<id>-shadow.webp`。影子深浅、冷暖改 `publish-workbench.mjs` 里的 `SHADOW`。

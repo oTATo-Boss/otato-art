@@ -10,10 +10,12 @@ import { LeafShadow } from "./LeafShadow";
  * 开场的工作台。
  * 背景：Blender 渲出来的照片（墙、洞洞板、置物架、桌面、书堆）。
  * 挂件 + 香蕉猫：three.js 实时 3D，和照片同一个机位（HangingCharms）。
- * 公仔、两个机器人、鸭子、娃娃：同机位渲出来的透明小图，碰一下会晃、点一下会跳。
+ * 公仔、两个机器人、鸭子：同机位渲出来的透明小图，碰一下会晃、点一下会跳。
+ * 它们的影子是单独一层（同一个太阳渲的），正片叠底叠在背景上，玩具跳起来时影子变淡变虚。
  */
 
-type Sprite = { x: number; y: number; w: number; h: number; px: number; py: number };
+type Box = { x: number; y: number; w: number; h: number };
+type Sprite = Box & { px: number; py: number; shadow?: Box };
 const SPRITES = layout.sprites as Record<string, Sprite>;
 const PLATE = "/open/plate.webp";
 // CC-BY 模型的署名：鼠标停在玩具上时出现一行小字
@@ -24,15 +26,32 @@ const CREDITS: Record<string, string> = {
 };
 const MODELS = ["charm_prompt", "charm_model", "charm_work", "charm_ghost", "rail", "cat"];
 
-function Toy({ id, s, credit }: { id: string; s: Sprite; credit?: string }) {
+const pct = (v: number) => `${v * 100}%`;
+
+function ToyShadow({ id, b, el }: { id: string; b: Box; el: (n: HTMLImageElement | null) => void }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      ref={el}
+      src={`/open/sprites/${id}-shadow.webp`}
+      alt=""
+      draggable={false}
+      className="toy-shadow pointer-events-none absolute select-none"
+      style={{ left: pct(b.x), top: pct(b.y), width: pct(b.w), height: pct(b.h) }}
+      onAnimationEnd={(e) => e.currentTarget.classList.remove("hop", "wiggle")}
+    />
+  );
+}
+
+function Toy({ id, s, credit, shadow }: { id: string; s: Sprite; credit?: string; shadow: () => HTMLImageElement | null }) {
   const ref = useRef<HTMLDivElement>(null);
-  const pct = (v: number) => `${v * 100}%`;
   const replay = (cls: string) => {
-    const t = ref.current;
-    if (!t) return;
-    t.classList.remove("hop", "wiggle");
-    void t.offsetWidth;
-    t.classList.add(cls);
+    for (const t of [ref.current, shadow()]) {
+      if (!t) continue;
+      t.classList.remove("hop", "wiggle");
+      void t.offsetWidth;
+      t.classList.add(cls);
+    }
   };
   return (
     <div
@@ -76,6 +95,7 @@ export function Workbench({
   for (const m of MODELS) preload(`/open/3d/${m}.glb`, { as: "fetch", crossOrigin: "anonymous" });
 
   const frame = useRef<HTMLDivElement>(null);
+  const shadows = useRef<Record<string, HTMLImageElement | null>>({});
   const tip = useRef<HTMLSpanElement>(null);
   const [tipText, setTipText] = useState("");
 
@@ -125,8 +145,12 @@ export function Workbench({
         <img src={PLATE} alt="" className="absolute inset-0 h-full w-full select-none" draggable={false} />
         <HangingCharms active={active} visible={visible} plate={PLATE} onPick={onPick} onHover={onHover} />
         <LeafShadow />
+        {/* 影子全部在玩具下面一层，免得盖住旁边的玩具 */}
+        {Object.entries(SPRITES).map(([id, s]) =>
+          s.shadow ? <ToyShadow key={id} id={id} b={s.shadow} el={(n) => void (shadows.current[id] = n)} /> : null,
+        )}
         {Object.keys(SPRITES).map((id) => (
-          <Toy key={id} id={id} s={SPRITES[id]} credit={CREDITS[id]} />
+          <Toy key={id} id={id} s={SPRITES[id]} credit={CREDITS[id]} shadow={() => shadows.current[id] ?? null} />
         ))}
       </div>
 
