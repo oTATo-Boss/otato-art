@@ -1,0 +1,36 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../../node_modules/@fontsource/noto-sans-sc/900.css">
+<link rel="stylesheet" href="../../../node_modules/@fontsource/noto-sans-sc/500.css">
+<style>
+@font-face{font-family:G;src:url(../../../node_modules/geist/dist/fonts/geist-sans/Geist-Black.ttf);font-weight:900}
+@font-face{font-family:G;src:url(../../../node_modules/geist/dist/fonts/geist-sans/Geist-Bold.ttf);font-weight:700}
+@font-face{font-family:G;src:url(../../../node_modules/geist/dist/fonts/geist-sans/Geist-Medium.ttf);font-weight:500}
+@font-face{font-family:M;src:url(../../../node_modules/geist/dist/fonts/geist-mono/GeistMono-Medium.ttf)}
+@font-face{font-family:H;src:url(../../../node_modules/@fontsource/architects-daughter/files/architects-daughter-latin-400-normal.woff2)}
+body{margin:0;background:transparent;font-family:G,'Noto Sans SC';}
+.t{position:relative;overflow:hidden;margin:0 0 20px}
+.logo{display:block}
+.spark{display:inline-block;width:1em;height:1em;background:currentColor;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%)}
+</style></head><body>
+<div id="polaroid2" class="t" style="width:880px;height:1070px;background:#FAF7F0">
+  <!-- 纸纹 -->
+  <svg style="position:absolute;inset:0;opacity:.35;mix-blend-mode:multiply" width="880" height="1070"><filter id="p"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" seed="4"/><feColorMatrix values="0 0 0 0 .55  0 0 0 0 .5  0 0 0 0 .42  0 0 0 .18 0"/></filter><rect width="100%" height="100%" filter="url(#p)"/></svg>
+  <!-- 相片 -->
+  <div style="position:absolute;left:45px;top:46px;width:790px;height:790px;overflow:hidden;background:#222">
+    <div style="position:absolute;inset:-2px;background:url(photo.jpg) 50% 18%/cover;filter:saturate(1.08) contrast(1.04) brightness(1.02)"></div>
+    <!-- 暖色调 + 漏光 -->
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,196,140,.10),rgba(255,150,90,.06));mix-blend-mode:soft-light"></div>
+    <div style="position:absolute;right:-120px;top:-140px;width:420px;height:420px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,150,60,.55),rgba(255,120,40,0));mix-blend-mode:screen"></div>
+    <!-- 颗粒 -->
+    <svg style="position:absolute;inset:0;opacity:.22;mix-blend-mode:overlay" width="790" height="790"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="9"/></filter><rect width="100%" height="100%" filter="url(#g)"/></svg>
+    <!-- 暗角 + 内阴影 -->
+    <div style="position:absolute;inset:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),inset 0 0 70px rgba(0,0,0,.28)"></div>
+    <div style="position:absolute;left:22px;bottom:18px;font-family:M;font-size:22px;letter-spacing:2px;color:rgba(255,190,120,.9);text-shadow:0 0 6px rgba(255,140,40,.6)">'26 10 08</div>
+  </div>
+  <!-- 底部文字 -->
+  <div style="position:absolute;left:50px;top:872px;font-weight:900;font-size:112px;letter-spacing:-5px;color:#E11D48;line-height:1">model</div>
+  <div style="position:absolute;right:60px;top:880px;font-family:H;font-size:38px;color:#3b3b3b;transform:rotate(-4deg);text-align:right;line-height:1.12">more than<br>a model.</div>
+  <div style="position:absolute;left:54px;bottom:40px;font-family:M;font-size:19px;letter-spacing:3px;color:#9a948a">02 — MODEL.OTATO.ART</div>
+  <svg style="position:absolute;right:66px;bottom:34px" width="34" height="30" viewBox="0 0 34 30"><path d="M17 28C7 20 2 15 2 9a7 7 0 0 1 15-3 7 7 0 0 1 15 3c0 6-5 11-15 19z" fill="none" stroke="#E11D48" stroke-width="3" stroke-linejoin="round"/></svg>
+</div>
+</body></html>

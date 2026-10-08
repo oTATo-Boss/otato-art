@@ -59,7 +59,7 @@ export function OpenScreen({
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(70% 55% at 0% 100%, rgba(244,241,236,.92) 0%, rgba(244,241,236,.55) 45%, rgba(244,241,236,0) 75%)" }}
+        style={{ background: "radial-gradient(52% 46% at 0% 100%, rgba(246,242,235,.88) 0%, rgba(246,242,235,.45) 45%, rgba(246,242,235,0) 78%)" }}
       />
 
 

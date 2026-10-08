@@ -1,12 +1,13 @@
 """第 3 步：品牌挂件（细化版）+ 下层收纳"""
 import sys
-sys.path.insert(0, "/Users/griffith/Desktop/AI/我的项目/oTATo.Art/3d/workbench")
+import bpy, os
+sys.path.insert(0, os.path.dirname(bpy.data.filepath))  # 脚本和 workbench.blend 在同一个文件夹
 import importlib, lib
 importlib.reload(lib)
 from lib import *
 
 TX = ROOT + "/tex/"
-FONT_M = "/Users/griffith/Desktop/AI/我的项目/oTATo.Art/node_modules/geist/dist/fonts/geist-sans/Geist-Medium.ttf"
+FONT_M = os.path.normpath(ROOT + "/../../node_modules/geist/dist/fonts/geist-sans/Geist-Medium.ttf")
 for n in ("Charms", "Shelves"):
     clear_coll(n)
 CH, SH = coll("Charms"), coll("Shelves")

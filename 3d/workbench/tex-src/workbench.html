@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../../node_modules/@fontsource/noto-sans-sc/900.css">
+<link rel="stylesheet" href="../../../node_modules/@fontsource/noto-sans-sc/500.css">
+<style>
+@font-face{font-family:G;src:url(../../../node_modules/geist/dist/fonts/geist-sans/Geist-Black.ttf);font-weight:900}
+@font-face{font-family:G;src:url(../../../node_modules/geist/dist/fonts/geist-sans/Geist-Bold.ttf);font-weight:700}
+@font-face{font-family:G;src:url(../../../node_modules/geist/dist/fonts/geist-sans/Geist-Medium.ttf);font-weight:500}
+@font-face{font-family:M;src:url(../../../node_modules/geist/dist/fonts/geist-mono/GeistMono-Medium.ttf)}
+@font-face{font-family:PX;src:url(../../../node_modules/geist/dist/fonts/geist-pixel/GeistPixel-Square.woff2)}
+@font-face{font-family:H;src:url(../../../node_modules/@fontsource/architects-daughter/files/architects-daughter-latin-400-normal.woff2)}
+body{margin:0;background:transparent;font-family:G,'Noto Sans SC'}
+.t{position:relative;overflow:hidden;margin:0 0 20px}
+.note{width:700px;height:700px;box-shadow:inset 0 -40px 60px rgba(0,0,0,.05)}
+.note .h{position:absolute;left:70px;top:90px;font-family:H,'Noto Sans SC';font-size:104px;line-height:1.12;color:#1d1d1f}
+.paper{background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.012) 0 2px,transparent 2px 5px)}
+</style></head><body>
+<div id="note1" class="t note paper" style="background:#FFE46B"><div class="h" style="transform:rotate(-3deg)">Good ideas<br>peel on :)</div></div>
+<div id="note2" class="t note paper" style="background:#FFB3C4"><div class="h" style="font-family:'Noto Sans SC';font-weight:500;font-size:96px;line-height:1.35;transform:rotate(2deg)">今天也要<br>好好创作 ✦</div></div>
+<div id="note3" class="t note paper" style="background:#BFD6FF"><div class="h" style="font-size:92px">prompt →<br>model →<br>work ✓</div></div>
+<div id="note4" class="t note paper" style="background:#C9F2C7"><div class="h" style="transform:rotate(-2deg)">Make it<br>simple.<br><span style="font-size:70px">— oTATo</span></div></div>
+<div id="note5" class="t note paper" style="background:#FFE46B"><div class="h" style="font-size:86px;line-height:1.25"><u>TODO</u><br>☐ 更好的工具<br>☑ ship v1.0</div></div>
+
+<!-- prompt 笔记本封面 -->
+<div id="cover" class="t" style="width:760px;height:1160px;background:#2B5FFC">
+  <div style="position:absolute;inset:0;background:radial-gradient(120% 80% at 30% 20%,rgba(255,255,255,.10),transparent 60%),repeating-linear-gradient(45deg,rgba(0,0,0,.025) 0 2px,transparent 2px 6px)"></div>
+  <div style="position:absolute;left:70px;top:150px;color:#fff;font-weight:900;font-size:150px;letter-spacing:-6px;line-height:1">prompt</div>
+  <div style="position:absolute;left:76px;top:330px;color:rgba(255,255,255,.85);font-family:M;font-size:30px;letter-spacing:4px">PROMPT LIBRARY · No.01</div>
+  <div style="position:absolute;left:76px;top:380px;width:140px;height:6px;background:#FFB81C"></div>
+  <img src="logo-white.png" style="position:absolute;left:60px;bottom:90px;width:150px;opacity:.95">
+  <div style="position:absolute;right:70px;bottom:110px;color:rgba(255,255,255,.8);font-family:M;font-size:28px;text-align:right">oTATo<br>macOS</div>
+</div>
+
+<!-- work 显示器屏幕 -->
+<div id="screen" class="t" style="width:1000px;height:760px;background:radial-gradient(120% 120% at 50% 40%,#1E3A8A 0%,#0B1530 70%);color:#CFE0FF;font-family:M">
+  <div style="position:absolute;left:50px;top:40px;font-size:30px;opacity:.75">oTATo work — studio</div>
+  <div style="position:absolute;right:50px;top:40px;font-size:30px;color:#7CFFB2">● LIVE</div>
+  <div style="position:absolute;left:50px;top:110px;display:grid;grid-template-columns:repeat(3,270px);gap:22px">
+    <div style="height:170px;background:linear-gradient(135deg,#2B5FFC,#7aa2ff);border-radius:14px"></div>
+    <div style="height:170px;background:linear-gradient(135deg,#E11D48,#ff9db2);border-radius:14px"></div>
+    <div style="height:170px;background:linear-gradient(135deg,#FFB81C,#ffe08a);border-radius:14px"></div>
+    <div style="height:170px;background:linear-gradient(135deg,#1aa77a,#9ef0cf);border-radius:14px"></div>
+    <div style="height:170px;background:repeating-linear-gradient(90deg,#24407e 0 12px,#1c3366 12px 24px);border-radius:14px"></div>
+    <div style="height:170px;border:3px dashed rgba(207,224,255,.4);border-radius:14px;display:grid;place-items:center;font-size:60px">+</div>
+  </div>
+  <div style="position:absolute;left:50px;bottom:110px;font-family:PX;font-size:64px;color:#fff">work_</div>
+  <div style="position:absolute;left:50px;right:50px;bottom:60px;height:20px;border-radius:10px;background:rgba(255,255,255,.15)"><div style="width:72%;height:100%;border-radius:10px;background:#7CFFB2"></div></div>
+  <div style="position:absolute;right:50px;bottom:100px;font-size:32px">generating… 72%</div>
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 2px,transparent 2px 5px)"></div>
+</div>
+
+<!-- 牛皮纸编号吊牌 -->
+<div id="tag1" class="t" style="width:360px;height:180px;background:#C9A06B"><div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.04) 0 1px,transparent 1px 4px)"></div><div style="position:absolute;left:28px;top:34px;font-family:M;font-size:46px;color:#2a1c0c">01 · prompt</div><div style="position:absolute;left:30px;top:104px;font-family:M;font-size:26px;color:#4a3420">TEST SIGNAL</div></div>
+<div id="tag2" class="t" style="width:360px;height:180px;background:#C9A06B"><div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.04) 0 1px,transparent 1px 4px)"></div><div style="position:absolute;left:28px;top:34px;font-family:M;font-size:46px;color:#2a1c0c">02 · model</div><div style="position:absolute;left:30px;top:104px;font-family:M;font-size:26px;color:#4a3420">ON AIR</div></div>
+<div id="tag3" class="t" style="width:360px;height:180px;background:#C9A06B"><div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.04) 0 1px,transparent 1px 4px)"></div><div style="position:absolute;left:28px;top:34px;font-family:M;font-size:46px;color:#2a1c0c">03 · work</div><div style="position:absolute;left:30px;top:104px;font-family:M;font-size:26px;color:#4a3420">COMING SOON</div></div>
+
+<!-- 圆形 logo 贴纸 -->
+<div id="logo_sticker" class="t" style="width:600px;height:600px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 0 0 0 #fff"><img src="logo.png" style="width:470px"></div>
+<!-- 拍立得 -->
+<div id="polaroid" class="t" style="width:700px;height:860px;background:#FBFAF6">
+  <div style="position:absolute;left:46px;top:50px;width:608px;height:600px;background:url(./photo.jpg) center 20%/cover"></div>
+  <div style="position:absolute;left:52px;bottom:70px;font-weight:900;font-size:96px;letter-spacing:-4px;color:#E11D48;line-height:1">model</div>
+  <div style="position:absolute;right:58px;bottom:84px;font-family:H;font-size:40px;color:#555;transform:rotate(-4deg);text-align:right;line-height:1.05">more than<br>a model.</div>
+</div>
+<!-- 空位卡片 -->
+<div id="ghost" class="t" style="width:560px;height:780px">
+  <div style="position:absolute;inset:14px;border:8px dashed rgba(60,60,64,.7);border-radius:40px"></div>
+  <div style="position:absolute;left:0;right:0;top:270px;text-align:center;font-weight:500;font-size:150px;color:rgba(60,60,64,.75);line-height:1">+</div>
+  <div style="position:absolute;left:0;right:0;top:450px;text-align:center;font-family:M;font-size:40px;letter-spacing:3px;color:rgba(60,60,64,.75)">COMING SOON</div>
+</div>
+<!-- 切割垫 -->
+<div id="mat" class="t" style="width:1800px;height:1000px;background:#2E55E6">
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.2) 0 2px,transparent 2px 60px),repeating-linear-gradient(90deg,rgba(255,255,255,.2) 0 2px,transparent 2px 60px)"></div>
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,transparent 1px 12px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 12px)"></div>
+  <div style="position:absolute;right:90px;bottom:70px;font-family:H;font-size:84px;color:rgba(255,255,255,.85);transform:rotate(-5deg)">Creative tools club ✦</div>
+</div>
+</body></html>

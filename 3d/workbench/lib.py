@@ -13,10 +13,11 @@ def bsdf(nt):
 def bg_node(nt):
     return next(n for n in nt.nodes if n.type == "BACKGROUND")
 
-ROOT = "/Users/griffith/Desktop/AI/我的项目/oTATo.Art/3d/workbench"
-ASSETS = "/Users/griffith/Desktop/oTATo-Codex任务/交付"
-MORE = "/Users/griffith/Desktop/模型素材/unzipped"
-TOY = "/Users/griffith/Desktop/otato-threejs"
+ROOT = os.path.dirname(os.path.abspath(__file__))  # 3d/workbench，所有路径都相对项目
+ASSETS = ROOT + "/assets/codex"   # Codex 下载的模型/贴图/HDRI（只拷了用到的）
+EXTRA = ROOT + "/assets/extra"     # 用户收集的模型素材
+MORE = EXTRA + "/unzipped"
+TOY = ROOT + "/models"  # 公仔 glb 复制进项目里，不依赖桌面文件夹
 
 
 def lin(h):

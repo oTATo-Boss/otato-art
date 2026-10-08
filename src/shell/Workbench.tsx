@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { preload } from "react-dom";
 import layout from "./workbench-layout.json";
 import { HangingCharms } from "./HangingCharms";
 import { LeafShadow } from "./LeafShadow";
@@ -9,14 +10,21 @@ import { LeafShadow } from "./LeafShadow";
  * 开场的工作台。
  * 背景：Blender 渲出来的照片（墙、洞洞板、置物架、桌面、书堆）。
  * 挂件 + 香蕉猫：three.js 实时 3D，和照片同一个机位（HangingCharms）。
- * 公仔、机器人、鸭子、娃娃：同机位渲出来的透明小图，碰一下会晃、点一下会跳。
+ * 公仔、两个机器人、鸭子、娃娃：同机位渲出来的透明小图，碰一下会晃、点一下会跳。
  */
 
 type Sprite = { x: number; y: number; w: number; h: number; px: number; py: number };
-const SPRITES = layout.sprites as Record<"toy" | "robot" | "duck" | "doll", Sprite>;
+const SPRITES = layout.sprites as Record<string, Sprite>;
 const PLATE = "/open/plate.webp";
+// CC-BY 模型的署名：鼠标停在玩具上时出现一行小字
+const CREDITS: Record<string, string> = {
+  robot: "3D model “Cute Little Robot” by Felix Yadomi · CC BY 4.0",
+  bot: "3D model by 逍遥开发小组 · CC BY 4.0",
+  cat: "3D model “Cute Cat in Cute Banana” by SOBOL · CC BY 4.0",
+};
+const MODELS = ["charm_prompt", "charm_model", "charm_work", "charm_ghost", "rail", "cat"];
 
-function Toy({ id, s }: { id: string; s: Sprite }) {
+function Toy({ id, s, credit }: { id: string; s: Sprite; credit?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const pct = (v: number) => `${v * 100}%`;
   const replay = (cls: string) => {
@@ -29,7 +37,7 @@ function Toy({ id, s }: { id: string; s: Sprite }) {
   return (
     <div
       ref={ref}
-      className="workbench-toy absolute cursor-pointer select-none"
+      className="workbench-toy group absolute cursor-pointer select-none"
       style={{
         left: pct(s.x),
         top: pct(s.y),
@@ -43,6 +51,11 @@ function Toy({ id, s }: { id: string; s: Sprite }) {
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={`/open/sprites/${id}.webp`} alt="" className="pointer-events-none h-full w-full" draggable={false} />
+      {credit && (
+        <span className="mono pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111]/85 px-2 py-0.5 text-[9px] text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          {credit}
+        </span>
+      )}
     </div>
   );
 }
@@ -58,6 +71,10 @@ export function Workbench({
   labels: Record<string, string>;
   onPick: (id: string) => void;
 }) {
+  // 在 HTML 头里就开始下载背景和 3D 模型，不等 JS 跑起来
+  preload(PLATE, { as: "image", fetchPriority: "high" });
+  for (const m of MODELS) preload(`/open/3d/${m}.glb`, { as: "fetch", crossOrigin: "anonymous" });
+
   const frame = useRef<HTMLDivElement>(null);
   const tip = useRef<HTMLSpanElement>(null);
   const [tipText, setTipText] = useState("");
@@ -94,7 +111,8 @@ export function Workbench({
       t.style.opacity = "0";
       return;
     }
-    setTipText(labels[id] ?? id);
+    // 挂件显示频道名（可点）；香蕉猫这类只显示署名
+    setTipText(CREDITS[id] ?? `${labels[id] ?? id} ↗`);
     t.style.opacity = "1";
     t.style.transform = `translate3d(${x + 16}px, ${y + 18}px, 0)`;
   };
@@ -107,8 +125,8 @@ export function Workbench({
         <img src={PLATE} alt="" className="absolute inset-0 h-full w-full select-none" draggable={false} />
         <HangingCharms active={active} visible={visible} plate={PLATE} onPick={onPick} onHover={onHover} />
         <LeafShadow />
-        {(Object.keys(SPRITES) as (keyof typeof SPRITES)[]).map((id) => (
-          <Toy key={id} id={id} s={SPRITES[id]} />
+        {Object.keys(SPRITES).map((id) => (
+          <Toy key={id} id={id} s={SPRITES[id]} credit={CREDITS[id]} />
         ))}
       </div>
 
@@ -116,10 +134,10 @@ export function Workbench({
       <span
         ref={tip}
         aria-hidden
-        className="mono pointer-events-none fixed left-0 top-0 z-30 whitespace-nowrap rounded-full bg-[#111] px-2.5 py-1 text-[10px] uppercase text-white"
-        style={{ opacity: 0, transition: "opacity .15s" }}
+        className="mono pointer-events-none fixed left-0 top-0 z-30 whitespace-nowrap rounded-full bg-[#111] px-2.5 py-1 text-[10px] text-white"
+        style={{ opacity: 0, transition: "opacity .15s", textTransform: Object.values(CREDITS).includes(tipText) ? "none" : "uppercase" }}
       >
-        {tipText} ↗
+        {tipText}
       </span>
 
       {/* 键盘、读屏用的入口 */}

@@ -11,12 +11,12 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // 以后有别的项目，在这里加一行
 const projects = { art: root };
-const commands = { dev: "dev", build: "build", start: "start" };
+const commands = { dev: "dev", build: "build", start: "start", check: "check", publish: "publish:workbench" };
 
 const [project, cmd = "dev"] = process.argv.slice(2);
 const cwd = projects[project];
 if (!cwd || !commands[cmd]) {
-  console.log("用法：otato art dev | otato art build | otato art start");
+  console.log("用法：otato art dev | build | start | check（推送前检查） | publish（更新开场工作台素材）");
   process.exit(1);
 }
 

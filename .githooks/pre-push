@@ -1,0 +1,9 @@
+#!/bin/sh
+# 推送前自动检查：代码检查 + 类型检查 + 构建。任何一步失败就不推送。
+# 真的需要跳过时：git push --no-verify（不建议用在 main）
+echo "推送前检查：npm run check …"
+npm run check --silent || {
+  echo ""
+  echo "检查没通过，已取消推送。修好后再推。"
+  exit 1
+}

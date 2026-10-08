@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { grab } from "./gesture";
 import { createCrtScreen } from "./crtScreen";
@@ -71,8 +72,9 @@ export function HangingCharms({
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.AgXToneMapping; // 和 Blender 出图一样用 AgX
-    renderer.toneMappingExposure = 1.05;
+    // 背景照片调过色（白点拉满、加饱和），这里用 Neutral：白能到纯白、颜色不发灰，和照片对得上
+    renderer.toneMapping = THREE.NeutralToneMapping;
+    renderer.toneMappingExposure = 0.95;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.domElement.style.cssText = "position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none";
@@ -152,7 +154,7 @@ export function HangingCharms({
     // ───── 挂件 ─────
     const bodies = {} as Record<Gid, Body>;
     const pickables: THREE.Object3D[] = [];
-    const loader = new GLTFLoader();
+    const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder); // glb 用 meshopt 压过
     const tag = (root: THREE.Object3D, id: Pick) =>
       root.traverse((o) => {
         o.userData.gid = id;
@@ -347,7 +349,7 @@ export function HangingCharms({
       lastX = e.clientX;
       if (dragging) {
         const b = bodies[dragging.id];
-        const a = Math.atan2(-(e.clientX - dragging.pivot.x), Math.max(20, e.clientY - dragging.pivot.y));
+        const a = Math.atan2(e.clientX - dragging.pivot.x, Math.max(20, e.clientY - dragging.pivot.y)); // 正角度 = 往右摆
         const now = performance.now();
         b.w = (a - dragging.prevA) / Math.max(0.001, (now - dragging.prevT) / 1000);
         b.a = dragging.prevA = Math.max(-1.1, Math.min(1.1, a));
@@ -362,7 +364,7 @@ export function HangingCharms({
         hover = id;
         renderer.domElement.style.cursor = id === "cat" ? "pointer" : id ? "grab" : "default";
       }
-      props.current.onHover(isCharm(id) && CHANNEL[id] ? CHANNEL[id]! : null, e.clientX, e.clientY);
+      props.current.onHover(id === "cat" ? "cat" : isCharm(id) && CHANNEL[id] ? CHANNEL[id]! : null, e.clientX, e.clientY);
     };
     const onDown = (e: PointerEvent) => {
       const id = pick(e.clientX, e.clientY);
@@ -372,7 +374,11 @@ export function HangingCharms({
         return;
       }
       grab.active = true;
-      renderer.domElement.setPointerCapture(e.pointerId);
+      try {
+        renderer.domElement.setPointerCapture(e.pointerId);
+      } catch {
+        // 有些合成事件没有真实指针，拿不到捕获也照样能拖
+      }
       const b = bodies[id];
       b.drag = true;
       dragging = { id, pivot: screenOf(b.group.position), sx: e.clientX, sy: e.clientY, prevA: b.a, prevT: performance.now(), touch: e.pointerType === "touch" };
@@ -412,7 +418,7 @@ export function HangingCharms({
     let tilt = 0;
     const onTilt = (e: DeviceOrientationEvent) => {
       if (e.gamma == null) return;
-      tilt = Math.max(-0.5, Math.min(0.5, (-e.gamma / 90) * 0.9));
+      tilt = Math.max(-0.5, Math.min(0.5, (e.gamma / 90) * 0.9));
     };
     const needsPermission = typeof DeviceOrientationEvent !== "undefined" && "requestPermission" in DeviceOrientationEvent;
     if (!reduced && !needsPermission) window.addEventListener("deviceorientation", onTilt);

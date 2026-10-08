@@ -1,6 +1,7 @@
 """第 2 步：桌面上的现成模型"""
 import sys
-sys.path.insert(0, "/Users/griffith/Desktop/AI/我的项目/oTATo.Art/3d/workbench")
+import bpy, os
+sys.path.insert(0, os.path.dirname(bpy.data.filepath))  # 脚本和 workbench.blend 在同一个文件夹
 import importlib, lib
 importlib.reload(lib)
 from lib import *
@@ -19,12 +20,34 @@ def put(key, blend, loc, height=None, yaw=0.0, keep=None, scale=None, drop=None)
     return root, objs
 
 
-put("plant", "/Users/griffith/Desktop/模型素材/potted_plant_02_4k.blend/potted_plant_02_4k.blend", (-0.84, -0.16, DESK_Z), height=0.52, yaw=20)
+put("plant", EXTRA + "/potted_plant_02_4k.blend/potted_plant_02_4k.blend", (-0.84, -0.16, DESK_Z), height=0.52, yaw=20)
 put("pens", M + "M08_stationery_supplies/stationery_supplies_2k.blend", (-0.46, -0.14, DESK_Z), scale=1.0, keep=["pencilcup"])
 put("lamp", M + "M03_desk_lamp_arm_01/desk_lamp_arm_01_2k.blend", (1.12, -0.1, DESK_Z), height=0.55, yaw=205)
 put("books", M + "M06_binder_notebook/binder_notebook_2k.blend", (0.86, -0.27, DESK_Z), scale=1.6, yaw=-10, keep=["closed"])
 put("camera", M + "M05_Camera_01/Camera_01_2k.blend", (0.64, -0.14, DESK_Z), height=0.075, yaw=-20, keep=["Camera_01"], drop=("wdg_",))
-put("mug", M + "M07_kitchenthings/kitchenthings.blend", (0.72, -0.5, DESK_Z), height=0.1, yaw=30, keep=["Cup2"])
+
+
+def mug(x, y, yaw=30):
+    """白瓷马克杯（自己建的，不用来源不明的模型）：外筒减内筒，加把手和一层咖啡"""
+    R, H = 0.04, 0.095
+    cer = mat("mug_ceramic", "#F4F1EA", 0.16, coat=0.6)
+    outer = cyl("mug", R, H, (x, y, DESK_Z + H / 2), cer, P, verts=64, bevel=0.004)
+    apply_mods(outer)
+    cut = cyl("mug_cut", R - 0.0045, H, (x, y, DESK_Z + H / 2 + 0.007), cer, P, verts=64)
+    bo = outer.modifiers.new("cut", "BOOLEAN")
+    bo.object = cut
+    bo.operation = "DIFFERENCE"
+    bo.solver = "EXACT"
+    apply_mods(outer)
+    bpy.data.objects.remove(cut)
+    smooth(outer)
+    a = math.radians(yaw)
+    hx, hy = x + math.cos(a) * (R + 0.012), y + math.sin(a) * (R + 0.012)
+    torus("mug_handle", 0.021, 0.0055, (hx, hy, DESK_Z + H * 0.52), cer, P, rot=(math.pi / 2, 0, a))
+    cyl("mug_coffee", R - 0.005, 0.002, (x, y, DESK_Z + H - 0.016), mat("coffee", "#3B2416", 0.08, coat=1.0), P, verts=64)
+
+
+mug(0.72, -0.5)
 put("apple", MORE + "/food_apple_01_4k/food_apple_01_4k.blend", (-0.26, -0.2, DESK_Z), height=0.075, yaw=40)
 put("frame", M + "M09_standing_picture_frame_01/standing_picture_frame_01_2k.blend", (-0.62, -0.06, DESK_Z), height=0.16, yaw=12)
 put("stapler", M + "M09_vintage_stapler/vintage_stapler_2k.blend", (-0.08, -0.08, DESK_Z), height=0.05, yaw=-70)

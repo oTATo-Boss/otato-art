@@ -1,6 +1,7 @@
 """第 1 步：房间、窗、洞洞板、挂杆、桌子、灯光、相机（白模 + 基础材质）"""
 import sys
-sys.path.insert(0, "/Users/griffith/Desktop/AI/我的项目/oTATo.Art/3d/workbench")
+import bpy, os
+sys.path.insert(0, os.path.dirname(bpy.data.filepath))  # 脚本和 workbench.blend 在同一个文件夹
 import importlib, lib
 importlib.reload(lib)
 from lib import *

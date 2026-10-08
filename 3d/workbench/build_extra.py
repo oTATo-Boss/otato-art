@@ -1,11 +1,13 @@
 """第 5 步：用户自己下载的素材（模型素材文件夹）"""
 import sys
-sys.path.insert(0, "/Users/griffith/Desktop/AI/我的项目/oTATo.Art/3d/workbench")
+import bpy, os
+sys.path.insert(0, os.path.dirname(bpy.data.filepath))  # 脚本和 workbench.blend 在同一个文件夹
 import importlib, lib
 importlib.reload(lib)
 from lib import *
+from mathutils import Vector, Matrix
 
-S = "/Users/griffith/Desktop/模型素材/"
+S = EXTRA + "/"
 TX = ROOT + "/tex/"
 clear_coll("Extra")
 E = coll("Extra")
@@ -28,17 +30,73 @@ def blend(key, rel, loc, height=None, scale=None, yaw=0.0, keep=None, tilt=None)
 # 桌面
 blend("notepads", "office_notepads_4k.blend/office_notepads_4k.blend", (0.74, -0.3, DESK_Z), scale=0.7, yaw=-6)
 blend("pencils", "stationery_supplies_4k.blend/stationery_supplies_4k.blend", (-0.06, -0.3, DESK_Z + 0.004), scale=1.0, yaw=12, keep=["pen_", "pencil_", "eraser"], tilt=(-90, 0))
-blend("duck", "rubber_duck_toy_4k.blend/rubber_duck_toy_4k.blend", (0.46, SHELF_Y + 0.005, SHELF_TOP), height=0.085, yaw=-25)
+blend("duck", "rubber_duck_toy_4k.blend/rubber_duck_toy_4k.blend", (0.605, SHELF_Y + 0.008, SHELF_TOP), height=0.08, yaw=-25)
 blend("watch", "digital_wrist_watch_4k.blend/digital_wrist_watch_4k.blend", (0.56, -0.33, DESK_Z), scale=1.0, yaw=70)
-r, sz = import_glb(S + "tiny_planet_friends_3d-wallet-3260.glb", E, 0.11, (0.5, -0.4, DESK_Z), yaw=-15, tilt=(-90, 0))
-info["wallet"] = [round(v, 3) for v in sz]
-r, sz = import_glb(S + "pixellabs-voodoo-doll-3469.glb", E, 0.145, (0.66, SHELF_Y, SHELF_TOP), yaw=-10)
-info["doll"] = [round(v, 3) for v in sz]
-r, sz = import_glb(S + "cute_little_robot.glb", E, 0.13, (0.17, SHELF_Y, SHELF_TOP), yaw=198)  # 模型正面朝 +Y，转 180° 面向镜头
+r, sz = import_glb(S + "cute_little_robot.glb", E, 0.125, (0.15, SHELF_Y, SHELF_TOP), yaw=200)  # 模型正面朝 +Y，转 180° 面向镜头
 info["robot"] = [round(v, 3) for v in sz]
 # 香蕉猫
-r, sz = import_glb(S + "cute_cat_in_cute_banana.glb", E, 0.125, (0.32, SHELF_Y, SHELF_TOP), yaw=-28, outlier=100, skip=("Icosphere",))
+r, sz = import_glb(S + "cute_cat_in_cute_banana.glb", E, 0.12, (0.475, SHELF_Y, SHELF_TOP), yaw=-28, outlier=100, skip=("Icosphere",))
 info["cat"] = [round(v, 3) for v in sz]
+# 新来的小机器人（Sketchfab：逍遥开发小组，CC-BY-4.0）
+rb, sz = import_glb(ROOT + "/models/robot_bot.glb", E, 0.115, (0.315, SHELF_Y + 0.004, SHELF_TOP), yaw=-104, outlier=6)  # 模型正面朝 +X，转 -90° 面向镜头
+info["bot"] = [round(v, 3) for v in sz]
+BOT_ROOT = rb
+
+
+def pose_bot(root, up_deg=58, down_deg=72):
+    """小机器人原本是 T 字平举双手。手臂是左右连在一起的整根网格：
+    在身体中线切开，右手（画面右）举起来打招呼，左手放下来贴着身体。"""
+    bpy.context.view_layer.update()
+    meshes = [o for o in root.children_recursive if o.type == "MESH" and not o.hide_render]
+
+    def wbb(o):
+        pts = [o.matrix_world @ Vector(v) for v in o.bound_box]
+        return Vector([min(q[i] for q in pts) for i in range(3)]), Vector([max(q[i] for q in pts) for i in range(3)])
+
+    a = Vector((math.cos(math.radians(-14)), math.sin(math.radians(-14)), 0))  # 手臂方向（跟着 yaw 稍微转了一点）
+    arms = []
+    for o in meshes:
+        mn, mx = wbb(o)
+        if (mx - mn).dot(Vector((abs(a.x), abs(a.y), 0))) > 0.1 and (mx.z - mn.z) < 0.04:
+            arms.append(o)
+    if not arms:
+        return 0
+    allp = [wbb(o) for o in arms]
+    c = sum(((mn + mx) / 2 for mn, mx in allp), Vector()) / len(allp)
+    k = a.cross(Vector((0, 0, 1))).normalized()
+    made = 0
+    for o in arms:
+        me = o.data.copy()
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bm.transform(o.matrix_world)
+        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+        bmesh.ops.bisect_plane(bm, geom=geom, plane_co=c, plane_no=a)
+        for side, ang in ((1, up_deg), (-1, down_deg)):
+            b2 = bm.copy()
+            kill = [v for v in b2.verts if (v.co - c).dot(a) * side < -1e-6]
+            bmesh.ops.delete(b2, geom=kill, context="VERTS")
+            pivot = c + a * side * 0.03
+            R = Matrix.Translation(pivot) @ Matrix.Rotation(math.radians(ang), 4, k) @ Matrix.Translation(-pivot)
+            b2.transform(R)
+            m2 = bpy.data.meshes.new(o.data.name + ("_R" if side > 0 else "_L"))
+            b2.to_mesh(m2)
+            b2.free()
+            for mat in o.data.materials:
+                m2.materials.append(mat)
+            n = bpy.data.objects.new(o.name + ("_R" if side > 0 else "_L"), m2)
+            E.objects.link(n)
+            n.parent = root
+            n.matrix_parent_inverse = root.matrix_world.inverted()
+            smooth(n)
+            made += 1
+        bm.free()
+        o.hide_render = True
+        o.hide_viewport = True
+    return made
+
+
+info["bot_arms"] = pose_bot(rb)
 
 
 def detoon(root):
@@ -72,10 +130,10 @@ def detoon(root):
 
 detoon(r)
 # 置物架右端：一小盆绿植
-blend("shelf_plant", "../oTATo-Codex任务/交付/models/M02_potted_plant_04/potted_plant_04_2k.blend", (0.775, SHELF_Y + 0.004, SHELF_TOP), height=0.15, yaw=30)
+blend("shelf_plant", "../codex/models/M02_potted_plant_04/potted_plant_04_2k.blend", (0.755, SHELF_Y + 0.004, SHELF_TOP), height=0.15, yaw=30)
 
 # ── 右下角：乱糟糟的书堆 + 笔记本 ──
-CM = "/Users/griffith/Desktop/oTATo-Codex任务/交付/models/"
+CM = ASSETS + "/models/"
 BOOKS = CM + "M06_decorative_book_set_01/decorative_book_set_01_2k.blend"
 
 

@@ -1,6 +1,6 @@
 """导出网页用的素材：
 - plate.png      背景（不含挂件、香蕉猫；公仔和架上玩具只隐身，影子留着）
-- <sprite>.png   透明小图：toy / robot / duck / doll（同机位，裁到自己的范围）
+- <sprite>.png   透明小图：toy / robot / bot / duck（同机位，裁到自己的范围）
 - charm_<id>.glb 挂件模型（世界坐标，挂点见 layout）
 - cat.glb        香蕉猫（带原地跑的动画）
 - layout.json    相机、挂点、小图位置
@@ -10,7 +10,7 @@ import bpy, json, math, os
 from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
 
-OUT = "/Users/griffith/Desktop/AI/我的项目/oTATo.Art/3d/workbench/renders/web/"
+OUT = os.path.join(os.path.dirname(bpy.data.filepath), "renders", "web") + "/"
 os.makedirs(OUT, exist_ok=True)
 sc = bpy.context.scene
 cam = sc.camera
@@ -37,7 +37,7 @@ cat = tree(roots("cute_cat_in_cute_banana_root")[0])
 sprites = {
     "toy": tree(bpy.data.objects["toy_root"]),
     "robot": tree(roots("cute_little_robot_root")[0]),
-    "doll": tree(roots("pixellabs-voodoo-doll-3469_root")[0]),
+    "bot": tree(roots("robot_bot_root")[0]),
 }
 duck_root = [o for o in bpy.data.collections["Extra"].objects if o.type == "EMPTY" and any("duck" in c.name for c in o.children_recursive)]
 sprites["duck"] = tree(duck_root[0])

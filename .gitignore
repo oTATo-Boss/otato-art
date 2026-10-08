@@ -19,3 +19,9 @@ next-env.d.ts
 *.bak_*.py
 __pycache__/
 /3d/workbench/renders/
+
+# 3D 场景的源素材（贴图/模型，约 1GB，单个文件可能超过 GitHub 100MB 限制）只留在本地项目里
+/3d/workbench/assets/
+
+# 本机备忘（账户信息等），不公开
+/docs/LOCAL.md

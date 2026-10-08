@@ -1,6 +1,7 @@
 """第 4 步：墙面和洞洞板上的装饰：便利贴、贴纸、小海报、和纸胶带"""
 import sys, random
-sys.path.insert(0, "/Users/griffith/Desktop/AI/我的项目/oTATo.Art/3d/workbench")
+import bpy, os
+sys.path.insert(0, os.path.dirname(bpy.data.filepath))  # 脚本和 workbench.blend 在同一个文件夹
 import importlib, lib
 importlib.reload(lib)
 from lib import *
@@ -62,7 +63,7 @@ def tape(x, z, w, ang, col, y):
 
 
 # 便利贴（洞洞板上 4 张，后墙右侧 1 张）
-note("note_todo", "note5", 1.0, 1.22, 0.13, -4, y=WALL)
+note("note_todo", "note5", 0.135, 1.32, 0.13, 3)  # 原来贴在右墙上会被频道索引挡住，挪到洞洞板中间空白处
 note("note_good", "note1", -0.18, 1.0, 0.12, 5)
 note("note_flow", "note3", 0.31, 1.36, 0.115, -3)
 note("note_cn", "note2", -0.3, 1.36, 0.11, -7)
