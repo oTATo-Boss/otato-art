@@ -11,7 +11,7 @@ import { LeafShadow } from "./LeafShadow";
  * 背景：Blender 渲出来的照片（墙、洞洞板、置物架、桌面、书堆）。
  * 挂件 + 香蕉猫：three.js 实时 3D，和照片同一个机位（HangingCharms）。
  * 公仔、两个机器人、鸭子：同机位渲出来的透明小图，碰一下会晃、点一下会跳。
- * 它们的影子是单独一层（同一个太阳渲的），正片叠底叠在背景上，玩具跳起来时影子变淡变虚。
+ * 它们的影子是单独一层（同一个太阳渲的）半透明图，叠在背景上，玩具跳起来时影子变淡变虚。
  */
 
 type Box = { x: number; y: number; w: number; h: number };
@@ -106,6 +106,8 @@ export function Workbench({
     let raf = 0;
     const tick = () => {
       raf = requestAnimationFrame(tick);
+      // 已经跟上鼠标就别再写 transform，省得整层每帧重新合成
+      if (Math.abs(m.tx - m.x) < 0.0004 && Math.abs(m.ty - m.y) < 0.0004) return;
       m.x += (m.tx - m.x) * 0.05;
       m.y += (m.ty - m.y) * 0.05;
       const f = frame.current;
@@ -143,8 +145,8 @@ export function Workbench({
         {/* 先显示照片，3D 起来以后盖在上面 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={PLATE} alt="" className="absolute inset-0 h-full w-full select-none" draggable={false} />
-        <HangingCharms active={active} visible={visible} plate={PLATE} onPick={onPick} onHover={onHover} />
-        <LeafShadow />
+        <HangingCharms active={active} visible={visible} onPick={onPick} onHover={onHover} />
+        <LeafShadow visible={visible} />
         {/* 影子全部在玩具下面一层，免得盖住旁边的玩具 */}
         {Object.entries(SPRITES).map(([id, s]) =>
           s.shadow ? <ToyShadow key={id} id={id} b={s.shadow} el={(n) => void (shadows.current[id] = n)} /> : null,

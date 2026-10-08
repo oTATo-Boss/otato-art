@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { grab } from "./gesture";
 import { createCrtScreen } from "./crtScreen";
 import layout from "./workbench-layout.json";
@@ -43,16 +44,90 @@ type Body = { a: number; w: number; tw: number; tv: number; drop: number; vy: nu
 
 const v3 = (p: Vec3) => new THREE.Vector3(p[0], p[1], p[2]);
 
+/**
+ * 性能：不透明零件不需要物理材质（清漆、透射那些每个像素都很贵），换成标准材质，看起来几乎一样。
+ * 透明的亚克力、玻璃、磨砂卡片另外指定材质，不走这里。同一个材质只换一次，保证还能共用（下面合并要靠它）。
+ */
+function simplifyMaterials(root: THREE.Object3D, cache: Map<string, THREE.Material>) {
+  root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh || Array.isArray(m.material)) return;
+    const src = m.material as THREE.MeshPhysicalMaterial;
+    if (!src.isMeshPhysicalMaterial || src.transparent || src.transmission > 0) return;
+    let dst = cache.get(src.uuid);
+    if (!dst) {
+      const std = new THREE.MeshStandardMaterial();
+      THREE.MeshStandardMaterial.prototype.copy.call(std, src);
+      // 清漆本来会让表面更亮一点，稍微降一点粗糙度补回来
+      std.roughness = Math.max(0.05, src.roughness - src.clearcoat * 0.1);
+      dst = std;
+      cache.set(src.uuid, dst);
+    }
+    m.material = dst;
+  });
+}
+
+/**
+ * 性能：一个挂件由几十个小零件组成（钩子、通风孔、旋钮……），每个零件都是一次绘制调用，阴影再画一遍。
+ * 把同一个组里、材质相同、不会单独动的零件合成一个网格。网页靠名字找的部件（屏幕、玻璃、亚克力）材质独一份，不会被合掉。
+ */
+function mergeStatic(root: THREE.Object3D) {
+  root.updateMatrixWorld(true);
+  const inv = root.matrixWorld.clone().invert();
+  const groups = new Map<string, THREE.Mesh[]>();
+  root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh || (m as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
+    if (m.matrixWorld.determinant() < 0) return; // 镜像过的零件合并后面会反，单独留着
+    const g = m.geometry;
+    if (Object.keys(g.morphAttributes).length) return;
+    const key = `${m.material.uuid}|${Object.keys(g.attributes).sort().join(",")}|${g.index ? 1 : 0}`;
+    const list = groups.get(key) ?? [];
+    list.push(m);
+    groups.set(key, list);
+  });
+  const rel = new THREE.Matrix4();
+  // 压缩过的 glb 顶点是整数（量化），先还原成普通浮点数才能直接变换、拼接
+  const toFloat = (g: THREE.BufferGeometry) => {
+    const out = new THREE.BufferGeometry();
+    for (const [name, a] of Object.entries(g.attributes)) {
+      const n = a.itemSize;
+      const arr = new Float32Array(a.count * n);
+      for (let i = 0; i < a.count; i++) {
+        arr[i * n] = a.getX(i);
+        if (n > 1) arr[i * n + 1] = a.getY(i);
+        if (n > 2) arr[i * n + 2] = a.getZ(i);
+        if (n > 3) arr[i * n + 3] = a.getW(i);
+      }
+      out.setAttribute(name, new THREE.BufferAttribute(arr, n));
+    }
+    if (g.index) out.setIndex(Array.from(g.index.array));
+    return out;
+  };
+  for (const list of groups.values()) {
+    if (list.length < 2) continue;
+    const geos = list.map((m) => toFloat(m.geometry).applyMatrix4(rel.multiplyMatrices(inv, m.matrixWorld)));
+    const merged = mergeGeometries(geos);
+    geos.forEach((g) => g.dispose());
+    if (!merged) continue;
+    const mesh = new THREE.Mesh(merged, list[0].material);
+    mesh.name = list[0].name;
+    root.add(mesh);
+    for (const m of list) {
+      m.removeFromParent();
+      m.geometry.dispose();
+    }
+  }
+}
+
 export function HangingCharms({
   active,
   visible,
-  plate,
   onPick,
   onHover,
 }: {
   active: boolean;
   visible: boolean;
-  plate: string;
   onPick: (id: string) => void;
   onHover: (id: string | null, x: number, y: number) => void;
 }) {
@@ -69,8 +144,13 @@ export function HangingCharms({
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let disposed = false;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // 性能：canvas 铺满整个工作台，像素数是最大的开销。
+    // 高清屏上渲染分辨率最多 1.5 倍（肉眼几乎看不出差别，像素少一半），并且不再开多重采样抗锯齿；
+    // 跑起来如果还掉帧，会自动再往下降（见循环里的 adapt）。
+    const DPR_MAX = Math.min(window.devicePixelRatio, 1.5);
+    let dpr = DPR_MAX;
+    const renderer = new THREE.WebGLRenderer({ antialias: window.devicePixelRatio < 1.5, alpha: true, powerPreference: "high-performance" });
+    renderer.setPixelRatio(dpr);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     // 背景照片调过色（白点拉满、加饱和），这里用 Neutral：白能到纯白、颜色不发灰，和照片对得上
     renderer.toneMapping = THREE.NeutralToneMapping;
@@ -94,19 +174,8 @@ export function HangingCharms({
     camera.lookAt(v3(L.camera.target));
     scene.add(camera);
 
-    // 背景照片：贴在相机正前方铺满画面，不参与色调映射（保持 Blender 原色）。
-    // 也让显示器玻璃这类透明材质能"透"出后面的墙。
-    const texLoader = new THREE.TextureLoader();
-    texLoader.load(plate, (t) => {
-      if (disposed) return t.dispose();
-      t.colorSpace = THREE.SRGBColorSpace;
-      const d = 30;
-      const h = 2 * d * Math.tan(vfov / 2);
-      const bg = new THREE.Mesh(new THREE.PlaneGeometry(h * (16 / 9), h), new THREE.MeshBasicMaterial({ map: t, toneMapped: false, depthWrite: false }));
-      bg.position.z = -d;
-      bg.renderOrder = -1;
-      camera.add(bg);
-    });
+    // 背景照片不在 3D 里画：canvas 是透明的，直接叠在下面那张 <img> 上（少一张 2400×1350 的贴图和一次满屏绘制）。
+    // 显示器玻璃这类半透明材质照样能透出后面的墙。
 
     // ───── 灯：和 Blender 里的夕阳同方向 ─────
     const sunDir = v3(L.sun.dir).normalize();
@@ -117,8 +186,8 @@ export function HangingCharms({
     sun.target = target;
     sun.position.copy(target.position).addScaledVector(sunDir, -3);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.radius = 7;
+    sun.shadow.mapSize.set(1024, 1024); // 影子本来就是虚的，1024 够了
+    sun.shadow.radius = 3.5;
     sun.shadow.bias = -0.0003;
     sun.shadow.normalBias = 0.002;
     Object.assign(sun.shadow.camera, { left: -1.3, right: 1.3, top: 0.9, bottom: -0.9, near: 0.5, far: 6 });
@@ -127,14 +196,16 @@ export function HangingCharms({
 
     // 接影子的隐形面：洞洞板正面 + 置物架上面
     const shadowMat = new THREE.ShadowMaterial({ color: 0x5a3c22, opacity: 0.15 });
-    const boardCatch = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.3), shadowMat);
-    boardCatch.position.set(0.05, 1.32, L.board + 0.001);
+    // 只铺在挂件影子可能落到的那一条（挂杆下面），别整块洞洞板：这个面每个像素都要算一次阴影，铺满全屏很费
+    const boardCatch = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 0.56), shadowMat);
+    boardCatch.position.set(0.1, 1.45, L.board + 0.001);
     boardCatch.receiveShadow = true;
     scene.add(boardCatch);
     const S = L.shelf;
-    const shelfCatch = new THREE.Mesh(new THREE.PlaneGeometry(S.x1 - S.x0, S.front - S.back), shadowMat);
+    // 架子上只有香蕉猫是实时的，接它影子的面只铺在猫附近
+    const shelfCatch = new THREE.Mesh(new THREE.PlaneGeometry(0.3, S.front - S.back), shadowMat);
     shelfCatch.rotation.x = -Math.PI / 2;
-    shelfCatch.position.set((S.x0 + S.x1) / 2, S.top + 0.0008, (S.front + S.back) / 2);
+    shelfCatch.position.set(0.52, S.top + 0.0008, (S.front + S.back) / 2);
     shelfCatch.receiveShadow = true;
     scene.add(shelfCatch);
 
@@ -155,6 +226,7 @@ export function HangingCharms({
     const bodies = {} as Record<Gid, Body>;
     const pickables: THREE.Object3D[] = [];
     const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder); // glb 用 meshopt 压过
+    const matCache = new Map<string, THREE.Material>();
     const tag = (root: THREE.Object3D, id: Pick) =>
       root.traverse((o) => {
         o.userData.gid = id;
@@ -197,6 +269,10 @@ export function HangingCharms({
               else if (/^ghost_card/.test(m.name)) m.material = frostMat;
               else if (/^case(?!_ring)/.test(m.name)) m.material = caseMat; // 拍立得的亚克力封装
             });
+          for (const root of [model, inner]) {
+            simplifyMaterials(root, matCache);
+            mergeStatic(root);
+          }
           tag(model, s.id);
           tag(inner, s.id);
           group.add(model);
@@ -211,6 +287,8 @@ export function HangingCharms({
       "/open/3d/rail.glb",
       (g) => {
         if (disposed) return;
+        simplifyMaterials(g.scene, matCache);
+        mergeStatic(g.scene);
         g.scene.traverse((o) => {
           const m = o as THREE.Mesh;
           if (m.isMesh) {
@@ -229,15 +307,39 @@ export function HangingCharms({
     let catAction: THREE.AnimationAction | null = null;
     let catRoot: THREE.Object3D | null = null;
     let catBase = 0;
+    let catProxy: THREE.Mesh | null = null;
+    let catProxyY = 0;
     const cat = { boost: 0, hop: 0, hv: 0 };
     loader.load("/open/3d/cat.glb", (g) => {
       if (disposed) return;
       catRoot = g.scene;
       catBase = catRoot.position.y;
-      tag(catRoot, "cat");
+      // 鼠标拾取不直接打在猫身上：蒙皮网格每次射线检测都要在 CPU 上把所有顶点算一遍，鼠标一动就卡。
+      // 用一个看不见的盒子代替。
+      // （骨骼这时还没算过，用模型的静止姿态算包围盒）
+      catRoot.updateMatrixWorld(true);
+      const box = new THREE.Box3();
       catRoot.traverse((o) => {
         const m = o as THREE.Mesh;
-        if (m.isMesh) {
+        if (!m.isMesh) return;
+        m.geometry.computeBoundingBox();
+        box.union(m.geometry.boundingBox!.clone().applyMatrix4(m.matrixWorld));
+      });
+      const size = box.getSize(new THREE.Vector3());
+      catProxy = new THREE.Mesh(new THREE.BoxGeometry(size.x, size.y, size.z), new THREE.MeshBasicMaterial());
+      catProxy.visible = false;
+      catProxy.position.copy(box.getCenter(new THREE.Vector3()));
+      catProxy.position.y = L.shelf.top + size.y / 2; // 静止姿态的高度不准，直接让盒子站在架子上
+      catProxyY = catProxy.position.y;
+      catProxy.userData.gid = "cat";
+      scene.add(catProxy);
+      pickables.push(catProxy);
+      const proxy = catProxy;
+      catRoot.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (m.isMesh && m !== proxy) {
+          o.userData.gid = "cat";
+          m.castShadow = true;
           m.frustumCulled = false; // 蒙皮网格的包围盒不准，别被误裁掉
           const mat = m.material as THREE.MeshStandardMaterial;
           mat.roughness = Math.max(0.45, mat.roughness);
@@ -345,6 +447,7 @@ export function HangingCharms({
     };
 
     const onMove = (e: PointerEvent) => {
+      wake();
       const vx = e.clientX - lastX;
       lastX = e.clientX;
       if (dragging) {
@@ -367,6 +470,7 @@ export function HangingCharms({
       props.current.onHover(id === "cat" ? "cat" : isCharm(id) && CHANNEL[id] ? CHANNEL[id]! : null, e.clientX, e.clientY);
     };
     const onDown = (e: PointerEvent) => {
+      wake();
       const id = pick(e.clientX, e.clientY);
       if (!id) return;
       if (id === "cat") {
@@ -452,13 +556,33 @@ export function HangingCharms({
     let acc = 0;
     let screenAcc = 0;
     const STEP = 1 / 120;
+    // 闲着的时候（没人碰、挂件也停稳了）降到 30 帧：猫还在跑，但 GPU 少干一半活
+    let lastRender = 0;
+    let busyUntil = performance.now() + 3000;
+    const wake = () => (busyUntil = performance.now() + 1500);
+    // 自动降分辨率：连续 2 秒平均每帧超过 25ms（低于 40 帧），渲染分辨率降一档，最低 0.75
+    let ema = 1 / 60;
+    let judgeAt = performance.now() + 4000;
+    const adapt = (now: number, dt: number) => {
+      ema += (dt - ema) * 0.05;
+      if (now < judgeAt) return;
+      judgeAt = now + 2000;
+      if (ema > 0.025 && dpr > 0.75) {
+        dpr = Math.max(0.75, dpr - 0.25);
+        renderer.setPixelRatio(dpr);
+        resize();
+        ema = 1 / 60;
+      }
+    };
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
       if (!props.current.visible) {
         last = now;
+        judgeAt = now + 2000; // 切回来以后先别急着判断
         return;
       }
       const dt = Math.min(0.1, (now - last) / 1000);
+      adapt(now, dt);
       acc += dt;
       last = now;
       const t = now / 1000;
@@ -500,6 +624,16 @@ export function HangingCharms({
         mixer.update(dt);
       }
       if (catRoot) catRoot.position.y = catBase + cat.hop;
+      if (catProxy) catProxy.position.y = catProxyY + cat.hop;
+      if (dragging || cat.hop > 0) wake();
+      else
+        for (const s of SLOTS) {
+          const b = bodies[s.id];
+          if (Math.abs(b.w) > 0.03 || Math.abs(b.tv) > 0.05 || b.fly > 0 || Math.abs(b.vy) > 0.01) {
+            wake();
+            break;
+          }
+        }
       // 灰尘：慢慢飘
       if (DUST) {
         const p = dustGeo.attributes.position as THREE.BufferAttribute;
@@ -521,7 +655,10 @@ export function HangingCharms({
         crtTex.needsUpdate = true;
         screenAcc = 0;
       }
-      renderer.render(scene, camera);
+      if (now < busyUntil || now - lastRender > 32) {
+        lastRender = now;
+        renderer.render(scene, camera);
+      }
     };
     raf = requestAnimationFrame(loop);
 
@@ -561,7 +698,7 @@ export function HangingCharms({
       cv.remove();
       api.current = null;
     };
-  }, [plate]);
+  }, []);
 
   useEffect(() => {
     if (active) api.current?.drop();

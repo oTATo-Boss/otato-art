@@ -67,12 +67,13 @@ async function optimizeGlb(io, src, dst) {
 }
 
 // ── 影子层 ──
-// Blender 阴影捕捉渲出来的 alpha = 这个玩具挡掉了多少光。转成一张"正片叠底"用的图：
-// 没影子的地方是白色（叠上去不变），有影子的地方按下面的颜色压暗，叫桌面/墙原本的颜色透出来，不会死黑。
-// SHADOW.dark：最深处每个通道最多压暗多少（蓝通道少压一点，影子偏冷，和窗外天光一致）。
+// Blender 阴影捕捉渲出来的 alpha = 这个玩具挡掉了多少光。转成一张半透明的深色图直接叠在背景上：
+// 最深处也只有 SHADOW.alpha 的不透明度，桌面/墙原本的颜色会透出来，不会死黑。
+// 不用正片叠底：混合模式盖在 3D 画面上，浏览器每帧都要整屏重算，会卡。
+// SHADOW.color：影子颜色（偏冷一点，和窗外天光一致）。
 // floor：低于这个强度的当噪点去掉（阴影捕捉会在整面墙上留一层很淡的灰）。
 // 只在玩具附近找影子：左右各放宽 near 倍玩具宽度（影子朝右，右边放宽 far 倍），上下放宽 1 倍高度。
-const SHADOW = { dark: [0.66, 0.64, 0.56], blur: 1.2, floor: 0.06, near: 1, far: 3 };
+const SHADOW = { color: [10, 12, 30], alpha: 0.62, blur: 1.2, floor: 0.06, near: 1, far: 3 };
 
 async function shadowLayer(src, dst, sp) {
   const meta = await sharp(src).metadata();
@@ -98,13 +99,16 @@ async function shadowLayer(src, dst, sp) {
   if (x1 < 0) return null;
   x0 = Math.max(0, x0 - 2); y0 = Math.max(0, y0 - 2); x1 = Math.min(w - 1, x1 + 2); y1 = Math.min(h - 1, y1 + 2);
   const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
-  const out = Buffer.alloc(cw * ch * 3);
+  const out = Buffer.alloc(cw * ch * 4);
   for (let y = 0; y < ch; y++)
     for (let x = 0; x < cw; x++) {
-      const s = alpha[(y + y0) * w + x + x0] / 255;
-      for (let k = 0; k < 3; k++) out[(y * cw + x) * 3 + k] = Math.round((1 - s * SHADOW.dark[k]) * 255);
+      const i = (y * cw + x) * 4;
+      out[i] = SHADOW.color[0];
+      out[i + 1] = SHADOW.color[1];
+      out[i + 2] = SHADOW.color[2];
+      out[i + 3] = Math.round((alpha[(y + y0) * w + x + x0] / 255) * SHADOW.alpha * 255);
     }
-  await sharp(out, { raw: { width: cw, height: ch, channels: 3 } }).webp({ quality: 88, effort: 6 }).toFile(dst);
+  await sharp(out, { raw: { width: cw, height: ch, channels: 4 } }).webp({ quality: 90, alphaQuality: 100, effort: 6 }).toFile(dst);
   return { x: x0 / w, y: y0 / h, w: cw / w, h: ch / h };
 }
 

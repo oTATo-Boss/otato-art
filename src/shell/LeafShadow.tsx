@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from "react";
 
-/** 窗外树叶的影子：随机画一簇叶子，模糊后叠在墙上，慢慢摇 */
+/**
+ * 窗外树叶的影子：随机画一簇叶子，叠在墙上慢慢摇。
+ * 性能：不用 CSS 的 blur 滤镜（每帧都要重新模糊一大块），直接画成很小的图（原尺寸的 1/6），
+ * 浏览器放大时自然就是虚的，效果差不多，几乎不花 GPU。
+ */
+const SCALE = 1 / 6;
 function paintLeaves() {
   const c = document.createElement("canvas");
-  c.width = 900;
-  c.height = 640;
+  c.width = Math.round(900 * SCALE);
+  c.height = Math.round(640 * SCALE);
   const ctx = c.getContext("2d")!;
+  ctx.scale(SCALE, SCALE);
   ctx.fillStyle = "#5a3a1c";
   let seed = 7;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
@@ -45,7 +51,7 @@ function paintLeaves() {
   return c.toDataURL("image/png");
 }
 
-export function LeafShadow() {
+export function LeafShadow({ visible }: { visible: boolean }) {
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
     // 只在浏览器里画一次
@@ -54,7 +60,7 @@ export function LeafShadow() {
   }, []);
   if (!src) return null;
   return (
-    <div aria-hidden className="leaf-shadow pointer-events-none absolute" style={{ left: "-4%", top: "-6%", width: "52%", height: "70%" }}>
+    <div aria-hidden className={`leaf-shadow pointer-events-none absolute ${visible ? "" : "paused"}`} style={{ left: "-4%", top: "-6%", width: "52%", height: "70%" }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt="" className="leaf-a absolute inset-0 h-full w-full" draggable={false} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
