@@ -14,6 +14,8 @@ const BG = "#F7F7F4";
 const blockStyle: Record<string, { bg: string; fg: string; area: string }> = {
   prompt: { bg: "#2B5FFC", fg: "#ffffff", area: "md:[grid-area:1/4/3/6]" },
   model: { bg: "#E11D48", fg: "#ffffff", area: "md:[grid-area:2/6/4/7]" },
+  tools: { bg: "#f9e1bc", fg: "#212745", area: "md:[grid-area:4/2/5/4]" },
+  skill: { bg: "#e5e0ed", fg: "#332d39", area: "md:[grid-area:4/4/5/6]" },
   work: { bg: "#E8DCC3", fg: "#2747C9", area: "md:[grid-area:3/3/4/6]" },
 };
 
@@ -110,12 +112,12 @@ export function AboutScreen({ lang, active }: { lang: Lang; active: boolean }) {
         ref={grid}
         onPointerMove={onGridMove}
         onPointerLeave={() => cell.current && (cell.current.style.opacity = "0")}
-        className="absolute inset-x-0 bottom-0 top-[88px] grid grid-cols-2 grid-rows-[repeat(5,1fr)] md:grid-cols-6 md:grid-rows-4"
+        className="absolute inset-x-0 bottom-0 top-[88px] grid grid-cols-2 grid-rows-[repeat(6,1fr)] md:grid-cols-6 md:grid-rows-4"
         style={{ borderTop: `1px solid ${LINE}`, opacity: hidden ? 0 : 1 }}
       >
         {/* 横线 */}
         {Array.from({ length: 24 }).map((_, i) => (
-          <div key={i} className={i >= 10 ? "hidden md:block" : ""} style={{ borderBottom: `1px solid ${LINE}` }} />
+          <div key={i} className={i >= 12 ? "hidden md:block" : ""} style={{ borderBottom: `1px solid ${LINE}` }} />
         ))}
         {/* 鼠标所在格 */}
         <div
@@ -125,7 +127,7 @@ export function AboutScreen({ lang, active }: { lang: Lang; active: boolean }) {
           style={{ background: "rgba(23,71,245,.06)", transition: "transform .35s cubic-bezier(.2,.8,.2,1), opacity .3s" }}
         />
 
-        <div className="absolute inset-0 grid grid-cols-2 grid-rows-[repeat(5,1fr)] md:grid-cols-6 md:grid-rows-4">
+        <div className="absolute inset-0 grid grid-cols-2 grid-rows-[repeat(6,1fr)] md:grid-cols-6 md:grid-rows-4">
           {/* 宣言 */}
           <div className="col-span-2 row-span-1 flex flex-col justify-between p-5 md:[grid-area:1/1/3/4] md:p-7">
             <p className="pixel overflow-hidden text-[13px]">
@@ -228,7 +230,7 @@ export function AboutScreen({ lang, active }: { lang: Lang; active: boolean }) {
           ))}
 
           {/* 页脚 */}
-          <div className="mono col-span-2 flex items-end justify-between p-4 text-[11px] md:[grid-area:4/3/5/7] md:p-6">
+          <div className="mono col-span-2 flex items-end justify-between p-4 text-[11px] md:[grid-area:4/6/5/7] md:flex-col md:justify-end md:p-6">
             <span>© 2026 oTATo</span>
             <span>otato.art</span>
           </div>

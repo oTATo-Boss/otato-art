@@ -25,7 +25,7 @@ export function Guide({ lang, onClose, onPick }: { lang: Lang; onClose: () => vo
       <h2 className="cjk-heavy mt-auto pt-10 text-[clamp(56px,10vw,168px)] leading-[0.85] tracking-[-0.04em]">
         {t(ui.guide, lang)}
       </h2>
-      <div className="grid grid-cols-1 gap-3 pt-8 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
+      <div className="grid grid-cols-1 gap-3 pt-8 sm:grid-cols-2 lg:grid-cols-3">
         {channels.map(({ meta }, i) => (
           <button
             key={meta.id}

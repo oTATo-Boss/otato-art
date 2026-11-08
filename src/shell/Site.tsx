@@ -152,6 +152,7 @@ export function Site({ lang }: { lang: Lang }) {
       const el = e.target as HTMLElement | null;
       if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === " " && el?.closest("button, a[href]")) return;
       if (guide) {
         if (e.key === "Escape") setGuide(false);
         return;

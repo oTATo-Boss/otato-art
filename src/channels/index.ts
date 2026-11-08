@@ -4,6 +4,9 @@ import { meta as promptMeta } from "./prompt/meta";
 import { meta as modelMeta } from "./model/meta";
 import { meta as workMeta } from "./work/meta";
 
+import { meta as toolsMeta } from "./tools/meta";
+import { meta as skillMeta } from "./skill/meta";
+
 /**
  * 频道表。加一个新产品：
  * 1. 复制一个频道文件夹（meta.ts + Screen.tsx）
@@ -14,6 +17,8 @@ export const channels: Channel[] = [
   { meta: promptMeta, Screen: dynamic(() => import("./prompt/Screen")) },
   { meta: modelMeta, Screen: dynamic(() => import("./model/Screen")) },
   { meta: workMeta, Screen: dynamic(() => import("./work/Screen")) },
+  { meta: toolsMeta, Screen: dynamic(() => import("./tools/Screen")) },
+  { meta: skillMeta, Screen: dynamic(() => import("./skill/Screen")) },
 ];
 
 export type { Channel, ChannelMeta, Status, Reveal } from "./types";

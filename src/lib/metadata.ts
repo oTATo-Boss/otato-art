@@ -4,11 +4,11 @@ import type { Lang } from "./i18n";
 const copy: Record<Lang, { title: string; description: string }> = {
   zh: {
     title: "去皮土豆 oTATo",
-    description: "做给创作者的小工具。oTATo prompt、oTATo model、oTATo work，每个产品是一个频道。",
+    description: "做给创作者的小工具。oTATo prompt、oTATo model、oTATo work、oTATo Toolbox 和 oTATo / skills，每个产品是一个频道。",
   },
   en: {
     title: "oTATo",
-    description: "Small tools for people who make things. oTATo prompt, oTATo model and oTATo work — every product is a channel.",
+    description: "Small tools for people who make things. oTATo prompt, oTATo model, oTATo work, oTATo Toolbox and oTATo / skills — every product is a channel.",
   },
 };
 

@@ -24,6 +24,8 @@ otato.art 是去皮土豆 oTATo 的品牌官网，也是旗下产品的入口。
 | 01 | [oTATo prompt](https://prompt.otato.art) · macOS 提示词资料库 | 试播 |
 | 02 | [oTATo model](https://model.otato.art) · AI 模特写真与商拍换装 | 直播中 |
 | 03 | [oTATo work](https://work.otato.art) · 开源 AI 创作工作台 | 即将开播 |
+| 04 | [oTATo Toolbox](https://tools.otato.art) · 创作工具箱 | 直播中 |
+| 05 | [oTATo / skills](https://skill.otato.art) · 工作流技能档案 | 直播中 |
 | 99 | 关于 | — |
 
 ## 开场：一张会动的照片

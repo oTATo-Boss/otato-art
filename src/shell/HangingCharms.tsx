@@ -8,6 +8,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { grab } from "./gesture";
 import { createCrtScreen } from "./crtScreen";
+import { channelPass } from "./channelPass";
 import layout from "./workbench-layout.json";
 
 /**
@@ -38,7 +39,7 @@ const SLOTS: { id: Gid; file: string; src: Gid }[] = [
   { id: "ghost1", file: "charm_ghost", src: "ghost1" },
   { id: "ghost2", file: "charm_ghost", src: "ghost1" },
 ];
-const CHANNEL: Partial<Record<Gid, string>> = { prompt: "prompt", model: "model", work: "work" };
+const CHANNEL: Partial<Record<Gid, string>> = { prompt: "prompt", model: "model", work: "work", ghost1: "tools", ghost2: "skill" };
 
 type Body = { a: number; w: number; tw: number; tv: number; drop: number; vy: number; drag: boolean; fly: number; group: THREE.Group; body: THREE.Group; home: THREE.Vector3 };
 
@@ -311,6 +312,7 @@ export function HangingCharms({
               if (!m.isMesh) return;
               if (/^crt_screen(?!_well)/.test(m.name)) m.material = crtMat;
               else if (/^crt_glass/.test(m.name)) m.material = glassMat; // 屏幕玻璃：薄薄一层反光，别把屏幕糊掉
+              else if (/^ghost_print/.test(m.name)) m.material = channelPass(s.id === "ghost1");
               else if (/^ghost_card/.test(m.name)) m.material = frostMat;
               else if (/^case(?!_ring)/.test(m.name)) m.material = caseMat; // 拍立得的亚克力封装
             });
