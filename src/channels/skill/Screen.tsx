@@ -44,6 +44,6 @@ export default function SkillScreen({ lang, active }: ScreenProps) {
         <div className="file-pocket"><span>oTATo <i>/</i> skills</span><small>REFERENCE<br />COLLECTION</small></div>
       </div>
     </div>
-    <div className="print-foot mono"><span>oTATo　 /　 PRODUCT CHANNELS</span><span>SKILL.OTATO.ART</span></div>
+    <div className="print-foot mono"><span>oTATo　 /　 PRODUCT CHANNELS</span><span>SKILLS.OTATO.ART</span></div>
   </div>;
 }
